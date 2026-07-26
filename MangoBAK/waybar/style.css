@@ -1,0 +1,319 @@
+/* 
+ * Copyright (C) 2020-2026 Aditya Shakya <adi1090x@gmail.com>
+*/
+
+/** ********** Import Colors ********** **/
+@import "./colors.css";
+
+/** ********** Fonts ********** **/
+* {
+    font-family: "JetBrains Mono", "Symbols Nerd Font", Iosevka, archcraft, sans-serif;
+    font-size: 14px;
+}
+
+/** ********** Waybar Window ********** **/
+window#waybar {
+    background-color: @background;
+	color: @foreground;
+    border-bottom: 2px solid @background-alt2;
+	border-radius: 0px 0px 12px 12px;
+    transition-property: background-color;
+    transition-duration: .5s;
+}
+
+/** ********** Custom ********** **/
+#custom-menu {
+	background-color: @background-alt2;
+	color: @selected;
+	font-size: 16px;
+	border-radius: 8px;
+	margin: 6px 0px 6px 6px;
+	padding: 2px 8px;
+}
+
+#custom-themes {
+    background-color: @selected;
+	margin: 6px 0px;
+}
+
+#custom-power {
+	background-color: @red;
+	font-size: 18px;
+	margin: 6px 6px 6px 0px;
+}
+
+#custom-sep {
+	color: @background-alt1;
+	margin: 0px 8px;
+}
+
+#custom-power, #custom-themes {
+	color: @background;
+	border-radius: 8px;
+	padding: 2px 8px;
+}
+
+/** ********** Light Mode ********** **/
+#custom-lightmode {
+	margin: 6px 0px ;
+	border-radius: 8px;
+	padding: 2px 8px;
+}
+#custom-lightmode.on {
+	background-color: @green;
+	color: @background;
+}
+#custom-lightmode.off {
+    background-color: @background-alt1;
+	color: @foreground;
+}
+
+/** ********** Idle Inhibitor ********** **/
+#idle_inhibitor {
+	background-color: @green;
+	color: @background;
+	border-radius: 8px;
+	margin: 6px 0px ;
+	padding: 2px 8px;
+}
+#idle_inhibitor.deactivated {
+	background-color: @red;
+}
+
+/** ********** Tray ********** **/
+#tray {
+	background-color: @background-alt1;
+	border-radius: 8px;
+	margin: 6px 0px ;
+	padding: 2px 8px;
+}
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+}
+#tray > .active {
+}
+
+/** ********** Backlight/Volume Slider ********** **/
+#backlight-slider ,
+#pulseaudio-slider  {
+	margin: 0px -6px;
+}
+
+#backlight-slider slider,
+#pulseaudio-slider slider {
+    min-height: 20px;
+    min-width: 20px;
+    border-radius: 6px;
+    border: 0px solid;
+    background-color: @background-alt2;
+/*  background-image: linear-gradient(@selected, @blue); */
+}
+
+#backlight-slider trough,
+#pulseaudio-slider trough {
+    min-height: 16px;
+    min-width: 100px;
+    border-radius: 4px;
+    border: 0px solid @background-alt1;
+    background-color: @background-alt1;
+}
+
+#backlight-slider highlight,
+#pulseaudio-slider highlight {
+    min-width: 0px;
+    border-radius: 4px;
+    background-image: linear-gradient(90deg, @selected, @blue);
+}
+
+/** ********** MPD ********** **/
+@keyframes gradient {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+#mpd {
+    background-color: @background-alt1;
+	color: @foreground;
+	font-size: 12px;
+	font-weight: bold;
+	border-radius: 8px;
+	margin: 6px 0px;
+	padding: 2px 8px;
+}
+#mpd.disconnected {
+	color: @red;
+}
+#mpd.stopped {
+	color: @red;
+}
+#mpd.playing {
+    background: linear-gradient(90deg, @selected 25%, @magenta 50%, @red 75%, @yellow 100%); 
+    background-size: 300% 300%;
+    animation: gradient 10s ease infinite;
+	color: @background;
+}
+#mpd.paused {
+}
+
+/** ********** Spotify ********** **/
+#custom-spotify {
+	background-color: @background-alt1;
+	color: @foreground;
+	font-size: 12px;
+	font-weight: bold;
+	border-radius: 8px;
+	margin: 6px 0px;
+	padding: 2px 8px;
+}
+
+#custom-spotify.paused {
+	color: @foreground;
+}
+
+#custom-spotify.playing {
+    background: linear-gradient(90deg, @selected 25%, @magenta 50%, @red 75%, @yellow 100%); 
+    background-size: 300% 300%;
+    animation: gradient 10s ease infinite;
+	color: @background;
+}
+
+#custom-spotify.offline {
+	color: @red;
+}
+
+/** ********** C/M/D ********** **/
+#cpu {
+}
+
+#memory {
+}
+
+#disk {
+}
+
+#cpu, #memory, #disk {
+	background-color: @background-alt1;
+	margin: 6px 0px ;
+	border-radius: 8px;
+	padding: 2px 8px;
+}
+
+/** ********** Pulseaudio ********** **/
+#pulseaudio {
+}
+#pulseaudio.bluetooth {
+	color: @cyan;
+}
+#pulseaudio.muted {
+	background-color: @red;
+	color: @background;
+}
+
+/** ********** Backlight ********** **/
+#backlight {
+}
+
+/** ********** Battery ********** **/
+#battery {
+}
+#battery.charging {
+}
+#battery.plugged {
+}
+@keyframes blink {
+    to {
+        color: @foreground;
+    }
+}
+#battery.critical:not(.charging) {
+	background-color: @red;
+	color: @background;
+    animation-name: blink;
+    animation-duration: 0.5s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+/** ********** Network ********** **/
+#network {
+}
+#network.disconnected,#network.disabled {
+	background-color: @red;
+	color: @background;
+}
+#network.linked {
+}
+#network.ethernet {
+}
+#network.wifi {
+}
+
+/** ********** Bluetooth ********** **/
+#bluetooth {
+}
+#bluetooth.disabled{
+	background-color: @red;
+	color: @background;
+}
+#bluetooth.off{
+	background-color: @red;
+	color: @background;
+}
+#bluetooth.on{
+}
+#bluetooth.connected{
+}
+#bluetooth.discoverable{
+}
+#bluetooth.discovering{
+}
+#bluetooth.pairable{
+}
+
+/** ********** Clock ********** **/
+#clock {
+}
+
+/** ********** Niri Desktop ********** **/
+#workspaces {
+	background-color: transparent;
+}
+#workspaces button{
+	color: @foreground;
+}
+#workspaces button.active{
+    border-bottom: 2px solid @selected;
+	border-radius: 0px;
+	color: @selected;
+}
+#workspaces button.urgent{
+	color: @red;
+}
+#workspaces button.hidden{
+	color: @yellow;
+}
+
+/** ********** Common style ********** **/
+#pulseaudio,
+#backlight,
+#bluetooth, 
+#network,
+#battery,
+#clock {
+	background-color: @background-alt1;
+	color: @foreground;
+	border-radius: 8px;
+	padding: 2px 12px;
+	margin: 6px 0px ;
+}

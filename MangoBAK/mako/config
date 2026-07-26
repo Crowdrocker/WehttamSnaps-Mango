@@ -1,0 +1,56 @@
+## Copyright (C) 2020-2026 Aditya Shakya <adi1090x@gmail.com>
+##
+## Configuration for Mako, notification daemon for Wayland.
+##
+## --------------------------------------------------------
+
+# GLOBAL CONFIGURATION OPTIONS
+max-history=100
+sort=-time
+
+# BINDING OPTIONS
+on-button-left=dismiss
+on-button-middle=none
+on-button-right=dismiss-all
+on-touch=dismiss
+on-notify=exec mpv /usr/share/sounds/freedesktop/stereo/message.oga
+
+# STYLE OPTIONS
+font=JetBrains Mono 10
+width=300
+height=100
+margin=20
+padding=16
+border-size=4
+border-radius=10
+icons=1
+max-icon-size=48
+icon-location=left
+markup=1
+actions=1
+history=1
+text-alignment=left
+default-timeout=5000
+ignore-timeout=0
+max-visible=5
+layer=overlay
+anchor=top-right
+
+# Mako_Colors
+background-color=#1E1F29
+text-color=#f4f3ee
+border-color=#333546
+progress-color=over #FF79C6
+
+[urgency=low]
+border-color=#333546
+default-timeout=2000
+
+[urgency=normal]
+border-color=#333546
+default-timeout=5000
+
+[urgency=high]
+border-color=#E34F4F
+text-color=#E34F4F
+default-timeout=0

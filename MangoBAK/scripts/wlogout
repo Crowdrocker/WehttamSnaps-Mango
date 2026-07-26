@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+## Copyright (C) 2020-2026 Aditya Shakya <adi1090x@gmail.com>
+##
+## Wlogout --------------------------------------------------
+
+LAYOUT="$HOME/.config/mango/wlogout/layout"
+STYLE="$HOME/.config/mango/wlogout/style.css"
+
+if [[ ! `pidof wlogout` ]]; then
+	wlogout --layout ${LAYOUT} --css ${STYLE} \
+		--buttons-per-row 3 \
+		--column-spacing 100 \
+		--row-spacing 100 \
+		--margin-top 250 \
+		--margin-bottom 250 \
+		--margin-left 250 \
+		--margin-right 250
+else
+	pkill wlogout
+fi

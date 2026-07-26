@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+## Copyright (C) 2020-2026 Aditya Shakya <adi1090x@gmail.com>
+##
+## Switch Events --------------------------------------------
+
+DIR="$HOME/.config/mango"
+
+case "${1:-}" in
+	--fold)
+		# For some reason, hyprlock doesn't work
+		#hyprlock --config "$DIR"/hyprlock.conf &
+		"$DIR/scripts/lockscreen"
+		mmsg -d disable_monitor,eDP-1
+		;;
+	--unfold)
+		mmsg -d enable_monitor,eDP-1
+		;;
+	*)
+		echo "Options: --fold  --unfold"
+		exit 1
+		;;
+esac

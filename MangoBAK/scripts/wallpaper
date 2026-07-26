@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+## Copyright (C) 2020-2026 Aditya Shakya <adi1090x@gmail.com>
+##
+## Wallpaper ------------------------------------------------
+
+WALLPAPER="$HOME/.config/mango/wallpapers/wallpaper.jpg"
+
+# Ensure only one swaybg instance exists
+if pgrep -x swaybg >/dev/null; then
+	pkill -TERM -x swaybg
+
+	# Wait until all instances exit
+	while pgrep -x swaybg >/dev/null; do
+		sleep 0.1
+	done
+fi
+
+# Spawn new wallpaper (detached)
+setsid swaybg \
+	--output '*' \
+	--mode fill \
+	--image "$WALLPAPER" \
+	>/dev/null 2>&1 &

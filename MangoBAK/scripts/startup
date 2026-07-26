@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+## Copyright (C) 2020-2026 Aditya Shakya <adi1090x@gmail.com>
+##
+## Autostart Programs ---------------------------------------
+
+## Helpers
+run() {
+	if ! pgrep -x "$1" >/dev/null 2>&1; then
+		"$@" &
+	fi
+}
+
+run_bg() {
+	("$@" >/dev/null 2>&1 &)
+}
+
+restart() {
+	local proc="$1"
+	shift
+
+	if pgrep -x "$proc" >/dev/null 2>&1; then
+		pkill -TERM -x "$proc"
+		while pgrep -x "$proc" >/dev/null 2>&1; do
+			sleep 0.1
+		done
+	fi
+
+	"$@" >/dev/null 2>&1 &
+}
+
+## Environment
+export XDG_CURRENT_DESKTOP=wlroots
+dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP >/dev/null 2>&1 &
+
+## Core UI Elements
+## restart waybar ~/.config/mango/scripts/statusbar
+restart mako   ~/.config/mango/scripts/notifications
+
+
+## Theming & Wallpaper
+run_bg ~/.config/mango/scripts/wallpaper
+run_bg ~/.config/mango/scripts/gtkthemes
+
+
+## Applets & Services
+run hypridle --config ~/.config/mango/hypridle.conf
+run nm-applet --indicator
+run mpd
+
+## Polkit
+#run /usr/lib/xfce-polkit/xfce-polkit
+run /usr/lib/polkit-kde-authentication-agent-1
+## Optional (disabled) : XWayland scaling
+#run xwayland-satellite :11
+#echo "Xft.dpi: 140" | xrdb -merge
+#gsettings set org.gnome.desktop.interface text-scaling-factor 1.4
+
+exit 0

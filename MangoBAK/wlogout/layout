@@ -1,0 +1,36 @@
+{
+    "label" : "lock",
+    "text" : "Lock",
+    "action" : "~/.config/mango/wlogout/actions --lock",
+    "keybind" : "l"
+}
+{
+    "label" : "logout",
+    "text" : "Logout",
+    "action" : "~/.config/mango/wlogout/actions --logout",
+    "keybind" : "e"
+}
+{
+    "label" : "suspend",
+    "text" : "Suspend",
+    "action" : "~/.config/mango/wlogout/actions --suspend",
+    "keybind" : "u"
+}
+{
+    "label" : "hibernate",
+    "text" : "Hibernate",
+    "action" : "~/.config/mango/wlogout/actions --hibernate",
+    "keybind" : "h"
+}
+{
+    "label" : "reboot",
+    "text" : "Reboot",
+    "action" : "~/.config/mango/wlogout/actions --reboot",
+    "keybind" : "r"
+}
+{
+    "label" : "shutdown",
+    "text" : "Shutdown",
+    "action" : "~/.config/mango/wlogout/actions --shutdown",
+    "keybind" : "s"
+}

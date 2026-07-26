@@ -1,0 +1,10 @@
+# Editor/OS cruft
+*.swp
+*.bak
+*~
+.DS_Store
+
+# Don't accidentally commit anything with secrets/tokens if you ever add
+# scripts here that need API keys, etc.
+*.env
+secrets.conf

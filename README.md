@@ -33,8 +33,6 @@
 </div>
 
 </div><br>
-
-<div align="center">
   
 # WehttamSnaps-Mango
 

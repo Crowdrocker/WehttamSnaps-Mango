@@ -1,0 +1,149 @@
+/* WehttamSnaps - Game Launcher Rofi Theme */
+
+window {
+    background-color: #07050f;
+    border:           1px;
+    border-color:     #ff5af1;
+    border-radius:    8px;
+    width:            1100px;
+}
+
+mainbox {
+    background-color: #07050f;
+    spacing:          0px;
+    padding:          0px;
+    children:         [ inputbar, message, listview, mode-switcher ];
+}
+
+inputbar {
+    background-color: #0d0a1a;
+    border:           0px 0px 1px 0px;
+    border-color:     #ff5af1;
+    padding:          10px 16px;
+    spacing:          10px;
+    children:         [ prompt, entry, case-indicator ];
+}
+
+prompt {
+    background-color: #0d0a1a;
+    text-color:       #ff5af1;
+    font:             "Share Tech Mono 10";
+    vertical-align:   0.5;
+}
+
+entry {
+    background-color: #0d0a1a;
+    text-color:       #c8f0e8;
+    font:             "Rajdhani SemiBold 13";
+    placeholder:      "SEARCH GAMES...";
+    placeholder-color: #555555;
+    vertical-align:   0.5;
+    expand:           true;
+}
+
+case-indicator {
+    background-color: #0d0a1a;
+    text-color:       #555555;
+    font:             "Share Tech Mono 10";
+}
+
+message {
+    background-color: #130f22;
+    border:           0px 0px 1px 0px;
+    border-color:     #ff5af1;
+    padding:          4px 16px;
+}
+
+textbox {
+    background-color: #130f22;
+    text-color:       #555555;
+    font:             "Share Tech Mono 10";
+}
+
+listview {
+    background-color: #07050f;
+    padding:          14px 12px;
+    spacing:          10px;
+    scrollbar:        false;
+    columns:          6;
+    lines:            3;
+    fixed-height:     false;
+    dynamic:          true;
+    layout:           vertical;
+    cycle:            true;
+}
+
+element {
+    background-color: #130f22;
+    border:           1px;
+    border-color:     #2a1540;
+    border-radius:    6px;
+    padding:          0px;
+    orientation:      vertical;
+}
+
+element normal.normal {
+    background-color: #130f22;
+    text-color:       #888888;
+}
+
+element selected.normal {
+    background-color: #1e0a2e;
+    text-color:       #00ffd1;
+    border:           1px;
+    border-color:     #ff5af1;
+    border-radius:    6px;
+}
+
+element alternate.normal {
+    background-color: #130f22;
+    text-color:       #888888;
+}
+
+element-icon {
+    background-color: #1a1430;
+    size:             148px;
+    border-radius:    5px 5px 0px 0px;
+}
+
+element-text {
+    background-color: #130f22;
+    text-color:       #888888;
+    font:             "Rajdhani SemiBold 11";
+    vertical-align:   0.5;
+    horizontal-align: 0.5;
+    padding:          5px 6px;
+    highlight:        bold #ff5af1;
+}
+
+scrollbar {
+    background-color: #0d0a1a;
+    handle-color:     #ff5af1;
+    handle-width:     3px;
+    border:           0px;
+    width:            3px;
+}
+
+mode-switcher {
+    background-color: #0d0a1a;
+    border:           1px 0px 0px 0px;
+    border-color:     #ff5af1;
+    padding:          6px 12px;
+    spacing:          6px;
+}
+
+button {
+    background-color: #0d0a1a;
+    text-color:       #555555;
+    font:             "Share Tech Mono 10";
+    border:           1px;
+    border-color:     #2a1540;
+    border-radius:    3px;
+    padding:          3px 10px;
+}
+
+button selected {
+    background-color: #1e0a2e;
+    text-color:       #ff5af1;
+    border-color:     #ff5af1;
+}

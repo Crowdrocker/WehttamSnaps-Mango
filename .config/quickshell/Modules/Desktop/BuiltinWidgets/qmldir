@@ -1,0 +1,22 @@
+module qs.Modules.Desktop
+DesktopClock 1.0 DesktopClock.qml
+DesktopCpuTemp 1.0 DesktopCpuTemp.qml
+DesktopGpuTemp 1.0 DesktopGpuTemp.qml
+DesktopSystemMonitor 1.0 DesktopSystemMonitor.qml
+DesktopWidgets 1.0 DesktopWidgets.qml
+DesktopPositioning 1.0 DesktopPositioning.qml
+DesktopWidgetPositioned 1.0 DesktopWidgetPositioned.qml
+DesktopCpuTempWidget 1.0 DesktopCpuTempWidget.qml
+DesktopGpuTempWidget 1.0 DesktopGpuTempWidget.qml
+DesktopSystemMonitorWidget 1.0 DesktopSystemMonitorWidget.qml
+DesktopClockWidget 1.0 DesktopClockWidget.qml
+MacOSClockWidget 1.0 MacOSClockWidget.qml
+DesktopTerminal 1.0 DesktopTerminal.qml
+DesktopTerminalWidget 1.0 DesktopTerminalWidget.qml
+DesktopIconsWidget 1.0 DesktopIconsWidget.qml
+DesktopIconWidget 1.0 DesktopIconWidget.qml
+DesktopFastfetch 1.0 DesktopFastfetch.qml
+DesktopFastfetchWidget 1.0 DesktopFastfetchWidget.qml
+DesktopMediaPlayerWidget 1.0 DesktopMediaPlayerWidget.qml
+DesktopCavaWidget 1.0 DesktopCavaWidget.qml
+

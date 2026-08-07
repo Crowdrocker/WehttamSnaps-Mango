@@ -1,0 +1,12 @@
+module qs.Modules.Weather
+
+WeatherModal             1.0  WeatherModal.qml
+WeatherDashEmbed         1.0  WeatherDashEmbed.qml
+StatBox                   1.0  StatBox.qml
+StatCard                  1.0  StatCard.qml
+HourBox                   1.0  HourBox.qml
+HourCard                  1.0  HourCard.qml
+DayRow                    1.0  DayRow.qml
+DayCard                   1.0  DayCard.qml
+DetailBox                 1.0  DetailBox.qml
+DetailCard                1.0  DetailCard.qml

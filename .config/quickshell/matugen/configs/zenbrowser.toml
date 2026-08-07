@@ -1,0 +1,7 @@
+[templates.ehzenchrome]
+input_path  = '~/.config/quickshell/matugen/templates/zen-userChrome.css'
+output_path = '~/.zen/default/chrome/userChrome.css'
+
+[templates.ehzencontent]
+input_path  = '~/.config/quickshell/matugen/templates/zen-userContent.css'
+output_path = '~/.zen/default/chrome/userContent.css'

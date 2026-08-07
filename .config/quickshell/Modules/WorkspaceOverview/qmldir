@@ -1,0 +1,3 @@
+module qs.Modules.WorkspaceOverview
+WorkspaceOverviewWidget 1.0 WorkspaceOverviewWidget.qml
+WorkspaceView 1.0 WorkspaceView.qml

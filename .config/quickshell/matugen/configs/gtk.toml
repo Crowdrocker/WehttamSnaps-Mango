@@ -1,0 +1,7 @@
+[templates.ehgtk4]
+input_path  = '~/.config/quickshell/matugen/templates/gtk.css'
+output_path = '~/.config/gtk-4.0/gtk.css'
+
+[templates.ehgtk3dark]
+input_path  = '~/.config/quickshell/matugen/templates/gtk-dark.css'
+output_path = '~/.config/gtk-3.0/gtk-dark.css'

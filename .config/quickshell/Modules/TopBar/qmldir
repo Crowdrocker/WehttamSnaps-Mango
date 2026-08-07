@@ -1,0 +1,5 @@
+module qs.Modules.TopBar
+TopBar 1.0 TopBar.qml
+Bar 1.0 Bar.qml
+TopBarAxisContext 1.0 AxisContext.qml
+TopBarVolumeMixer 1.0 VolumeMixer.qml

@@ -1,0 +1,164 @@
+import QtQuick
+import QtQuick.Controls
+import Quickshell
+import Quickshell.Services.Pipewire
+import qs.Common
+import qs.Services
+import qs.Widgets
+
+Item {
+    id: root
+
+    property var defaultSource: AudioService.source
+
+    readonly property bool isMuted: !defaultSource || defaultSource.audio.muted
+    readonly property real vol:     defaultSource?.audio ? defaultSource.audio.volume : 0
+
+    // ── Card shell ────────────────────────────────────────────────────────────
+    Rectangle {
+        anchors.fill: parent
+        radius: 18
+        color: Qt.rgba(Theme.surfaceContainer.r,
+                       Theme.surfaceContainer.g,
+                       Theme.surfaceContainer.b, 0.92)
+        border.color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.1)
+        border.width: 1
+
+        WheelHandler {
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            onWheel: ev => {
+                if (!root.defaultSource) return
+                var v = root.defaultSource.audio.volume * 100
+                v = ev.angleDelta.y > 0 ? Math.min(100, v + 5) : Math.max(0, v - 5)
+                root.defaultSource.audio.muted  = false
+                root.defaultSource.audio.volume = v / 100
+            }
+        }
+
+        Column {
+            anchors.fill: parent
+            anchors.margins: 14
+            spacing: 10
+
+            // ── Header row ────────────────────────────────────────────────────
+            Row {
+                width: parent.width
+                spacing: 10
+
+                Rectangle {
+                    id: iconCircle
+                    width: 36; height: 36; radius: 18
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: root.isMuted ? Qt.rgba(Theme.surfaceVariant.r,
+                                                  Theme.surfaceVariant.g,
+                                                  Theme.surfaceVariant.b, 1)
+                                        : Theme.primary
+                    Behavior on color { ColorAnimation { duration: 160 } }
+
+                    EHIcon {
+                        anchors.centerIn: parent
+                        name: root.isMuted ? "mic_off" : "mic"
+                        size: 18
+                        color: root.isMuted
+                            ? Qt.rgba(Theme.surfaceText.r, Theme.surfaceText.g, Theme.surfaceText.b, 0.5)
+                            : "white"
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (root.defaultSource)
+                                root.defaultSource.audio.muted = !root.defaultSource.audio.muted
+                        }
+                    }
+                }
+
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - iconCircle.width - pctLabel.implicitWidth - 20
+                    spacing: 1
+
+                    StyledText {
+                        text: "Microphone"
+                        font.pixelSize: Theme.fontSizeSmall - 1
+                        font.weight: Font.Bold
+                        color: Qt.rgba(Theme.surfaceText.r, Theme.surfaceText.g, Theme.surfaceText.b, 0.4)
+                    }
+
+                    StyledText {
+                        property string raw: root.defaultSource
+                            ? (root.defaultSource.description || "Audio Input") : "No device"
+                        text: raw.replace(" Analog Stereo", "")
+                                 .replace(" Analog Mono", "")
+                                 .replace(" Digital Stereo (IEC958)", "")
+                        font.pixelSize: Theme.fontSizeSmall
+                        font.weight: Font.Medium
+                        color: Theme.surfaceText
+                        elide: Text.ElideRight
+                        width: parent.width
+                    }
+                }
+
+                StyledText {
+                    id: pctLabel
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.isMuted ? "Muted" : Math.round(root.vol * 100) + "%"
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: Qt.rgba(Theme.surfaceText.r, Theme.surfaceText.g, Theme.surfaceText.b, 0.4)
+                }
+            }
+
+            // ── Slider ────────────────────────────────────────────────────────
+            Item {
+                width: parent.width
+                height: 26
+
+                Rectangle {
+                    id: trackBg
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: 5
+                    radius: 2.5
+                    color: Qt.rgba(Theme.surfaceText.r, Theme.surfaceText.g, Theme.surfaceText.b, 0.1)
+
+                    Rectangle {
+                        width: root.isMuted ? 0
+                            : Math.max(trackBg.radius * 2, trackBg.width * root.vol)
+                        height: parent.height
+                        radius: parent.radius
+                        color: root.isMuted
+                            ? Qt.rgba(Theme.surfaceText.r, Theme.surfaceText.g, Theme.surfaceText.b, 0.15)
+                            : Theme.primary
+                        Behavior on width { NumberAnimation { duration: 60 } }
+                        Behavior on color { ColorAnimation { duration: 160 } }
+                    }
+                }
+
+                Rectangle {
+                    x: Math.max(0, Math.min(trackBg.width - width,
+                           trackBg.width * root.vol - width / 2))
+                    Behavior on x { NumberAnimation { duration: 60 } }
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 22; height: 22; radius: 11
+                    color: "white"
+                    border.color: Qt.rgba(0, 0, 0, 0.12)
+                    border.width: 1
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.SizeHorCursor
+                    onPressed:  setVol(mouseX)
+                    onPositionChanged: if (pressed) setVol(mouseX)
+                    function setVol(mx) {
+                        if (!root.defaultSource) return
+                        root.defaultSource.audio.muted  = false
+                        root.defaultSource.audio.volume = Math.max(0, Math.min(1, mx / trackBg.width))
+                    }
+                }
+            }
+        }
+    }
+}

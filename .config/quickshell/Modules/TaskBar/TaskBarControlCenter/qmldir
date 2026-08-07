@@ -1,0 +1,3 @@
+module qs.Modules.TaskBar.TaskBarControlCenter
+TaskBarControlCenterPopout 1.0 TaskBarControlCenterPopout.qml
+PowerMenu 1.0 PowerMenu.qml

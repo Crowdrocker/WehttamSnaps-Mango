@@ -1,0 +1,27 @@
+module qs.Modules.Desktop
+DesktopClock 1.0 BuiltinWidgets/DesktopClock.qml
+DesktopCpuTemp 1.0 BuiltinWidgets/DesktopCpuTemp.qml
+DesktopGpuTemp 1.0 BuiltinWidgets/DesktopGpuTemp.qml
+DesktopTerminal 1.0 BuiltinWidgets/DesktopTerminal.qml
+DesktopSystemMonitorWidget 1.0 BuiltinWidgets/SystemMonitorWidget.qml
+DesktopSystemMonitorCardWidget 1.0 BuiltinWidgets/DesktopSystemMonitorCardWidget.qml
+DesktopSystemMonitorCircleWidget 1.0 BuiltinWidgets/DesktopSystemMonitorCircleWidget.qml
+MacOSClockWidget 1.0 BuiltinWidgets/MacOSClockWidget.qml
+DesktopAnalogClockWidget 1.0 BuiltinWidgets/DesktopAnalogClockWidget.qml
+DesktopEventHorizonWidget 1.0 BuiltinWidgets/DesktopEventHorizonWidget.qml
+EventHorizonSettingsMini 1.0 BuiltinWidgets/EventHorizonSettingsMini.qml
+DashCalendarEmbed 1.1 BuiltinWidgets/DashCalendarEmbed.qml
+DashWeatherEmbed 1.1 BuiltinWidgets/DashWeatherEmbed.qml
+DesktopWeatherWidget 1.0 BuiltinWidgets/DesktopWeatherWidget.qml
+DesktopFastfetchWidget 1.0 BuiltinWidgets/DesktopFastfetchWidget.qml
+DesktopFastfetchWidgetSimple 1.0 BuiltinWidgets/DesktopFastfetchWidgetSimple.qml
+DesktopBatteryWidget 1.0 BuiltinWidgets/DesktopBatteryWidget.qml
+DesktopWallpaperGalleryWidget 1.0 BuiltinWidgets/DesktopWallpaperGalleryWidget.qml
+DesktopMediaPlayerWidget 1.0 BuiltinWidgets/DesktopMediaPlayerWidget.qml
+DesktopCavaWidget 1.0 BuiltinWidgets/DesktopCavaWidget.qml
+DesktopCalendarWidget 1.0 BuiltinWidgets/DesktopCalendarWidget.qml
+DesktopIconWidget 1.0 BuiltinWidgets/DesktopIconWidget.qml
+DesktopWidgetLayer 1.0 DesktopWidgetLayer.qml
+DesktopPluginWrapper 1.0 DesktopPluginWrapper.qml
+DesktopIconsController 1.0 DesktopIconsController.qml
+

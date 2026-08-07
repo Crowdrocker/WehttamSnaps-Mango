@@ -1,0 +1,2688 @@
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
+import qs.Common
+import qs.Modals.Common
+import qs.Modals.FileBrowser
+import qs.Services
+import qs.Widgets
+import qs.Widgets as Widgets
+import "../Common/ShellUtils.js" as ShellUtils
+
+Widgets.FloatingWindow {
+    id: root
+
+    function close() {
+        visible = false
+    }
+
+    function open() {
+        visible = true
+    }
+
+
+    property int selectedVpnType: 0
+    property var vpnTypes: ["OpenVPN", "WireGuard", "IKEv2", "L2TP/IPsec", "PPTP", "StrongSwan", "Cisco AnyConnect"]
+
+    property string connectionName: ""
+    property string openvpnServer: ""
+    property string openvpnPort: "1194"
+    property string openvpnProtocol: "udp"
+    property string openvpnUsername: ""
+    property string openvpnPassword: ""
+
+    property string wireguardPrivateKey: ""
+    property string wireguardPublicKey: ""
+    property string wireguardEndpoint: ""
+    property string wireguardAllowedIPs: "0.0.0.0/0"
+    property string wireguardAddress: ""
+    property string wireguardPresharedKey: ""
+    property string wireguardMTU: ""
+    property string wireguardDNS: ""
+    property string wireguardPersistentKeepalive: ""
+
+    property string ikev2Address: ""
+    property string ikev2Username: ""
+    property string ikev2Password: ""
+
+    property string l2tpAddress: ""
+    property string l2tpUsername: ""
+    property string l2tpPassword: ""
+    property string l2tpPsk: ""
+
+    property string pptpAddress: ""
+    property string pptpUsername: ""
+    property string pptpPassword: ""
+
+    property string strongswanAddress: ""
+    property string strongswanCertificate: ""
+    property string strongswanMethod: "eap"
+    property string strongswanUsername: ""
+    property string strongswanPassword: ""
+
+    property string ciscoAddress: ""
+    property string ciscoUsername: ""
+    property string ciscoPassword: ""
+    property string ciscoGroup: ""
+
+    property bool importingFile: false
+    property bool generatingKeys: false
+    property string errorMessage: ""
+    property string pendingImportFilePath: ""
+    property bool waitingForConnectionName: false
+            property string pendingImportType: ""
+
+
+    function show() {
+        reset()
+        open()
+    }
+
+    function reset() {
+        selectedVpnType = 0
+        connectionName = ""
+        openvpnServer = ""
+        openvpnPort = "1194"
+        openvpnProtocol = "udp"
+        openvpnUsername = ""
+        openvpnPassword = ""
+        wireguardPrivateKey = ""
+        wireguardPublicKey = ""
+        wireguardEndpoint = ""
+        wireguardAllowedIPs = "0.0.0.0/0"
+        wireguardAddress = ""
+        wireguardPresharedKey = ""
+        wireguardMTU = ""
+        wireguardDNS = ""
+        wireguardPersistentKeepalive = ""
+        ikev2Address = ""
+        ikev2Username = ""
+        ikev2Password = ""
+        l2tpAddress = ""
+        l2tpUsername = ""
+        l2tpPassword = ""
+        l2tpPsk = ""
+        pptpAddress = ""
+        pptpUsername = ""
+        pptpPassword = ""
+        strongswanAddress = ""
+        strongswanCertificate = ""
+        strongswanMethod = "eap"
+        strongswanUsername = ""
+        strongswanPassword = ""
+        ciscoAddress = ""
+        ciscoUsername = ""
+        ciscoPassword = ""
+        ciscoGroup = ""
+        importingFile = false
+        generatingKeys = false
+        errorMessage = ""
+        pendingImportFilePath = ""
+        waitingForConnectionName = false
+        pendingImportType = ""
+    }
+
+    function importOvpnFile(filePath, connectionName) {
+        try {
+            importingFile = true
+            errorMessage = ""
+            importProcess.pendingConnectionName = connectionName || ""
+            importProcess.command = ["nmcli", "connection", "import", "type", "openvpn", "file", filePath]
+            importProcess.running = true
+        } catch (error) {
+            importingFile = false
+            errorMessage = "Error importing file: " + error.toString()
+        }
+    }
+
+    function importWireGuardConf(filePath, connectionName) {
+        try {
+            importingFile = true
+            errorMessage = ""
+
+            importProcess.pendingConnectionName = connectionName || ""
+            importProcess.command = ["nmcli", "connection", "import", "type", "wireguard", "file", filePath]
+            importProcess.running = true
+        } catch (error) {
+
+            importingFile = false
+            errorMessage = "Error importing file: " + error.toString()
+        }
+    }
+
+
+    function cancelImport() {
+        pendingImportFilePath = ""
+        pendingImportType = ""
+        waitingForConnectionName = false
+    }
+
+    function parseWireGuardConf(content) {
+        try {
+            const lines = content.split('\n')
+            let currentSection = ""
+            let interfaceData = {}
+            let peerData = {}
+            let connectionName = ""
+            let nextLineIsConnectionName = false
+
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim()
+
+                if (!line || line.startsWith('#')) {
+                    continue
+                }
+
+                if (line.startsWith('[') && line.endsWith(']')) {
+                    const sectionName = line.slice(1, -1).toLowerCase()
+
+                    if (sectionName === "connection name") {
+                        nextLineIsConnectionName = true
+                        currentSection = ""
+                        continue
+                    }
+
+                    currentSection = sectionName
+                    nextLineIsConnectionName = false
+                    continue
+                }
+
+                if (nextLineIsConnectionName) {
+                    connectionName = line
+                    nextLineIsConnectionName = false
+                    continue
+                }
+
+                const match = line.match(/^(\w+)\s*=\s*(.+)$/)
+                if (match) {
+                    const key = match[1].trim().toLowerCase()
+                    const value = match[2].trim()
+
+                    if (currentSection === "interface") {
+                        interfaceData[key] = value
+                    } else if (currentSection === "peer") {
+                        peerData[key] = value
+                    }
+                }
+            }
+
+            if (connectionName) {
+                root.connectionName = connectionName
+            } else if (!root.connectionName && root.pendingImportFilePath) {
+                const fileName = root.pendingImportFilePath.split('/').pop().replace(/\.conf$/i, '')
+                root.connectionName = fileName || "WireGuard Connection"
+            }
+
+            if (interfaceData['privatekey']) {
+                root.wireguardPrivateKey = interfaceData['privatekey']
+            }
+            if (interfaceData['address']) {
+                root.wireguardAddress = interfaceData['address']
+            }
+            if (interfaceData['dns']) {
+                root.wireguardDNS = interfaceData['dns']
+            }
+            if (interfaceData['mtu']) {
+                root.wireguardMTU = interfaceData['mtu']
+            }
+
+            if (peerData['publickey']) {
+                root.wireguardPublicKey = peerData['publickey']
+            }
+            if (peerData['endpoint']) {
+                root.wireguardEndpoint = peerData['endpoint']
+            }
+            if (peerData['allowedips']) {
+                root.wireguardAllowedIPs = peerData['allowedips']
+            }
+            if (peerData['presharedkey']) {
+                root.wireguardPresharedKey = peerData['presharedkey']
+            }
+            if (peerData['persistentkeepalive']) {
+                root.wireguardPersistentKeepalive = peerData['persistentkeepalive']
+            }
+
+            root.waitingForConnectionName = true
+        } catch (error) {
+
+            root.errorMessage = "Failed to parse WireGuard configuration: " + (error.toString() || "Unknown error")
+        }
+    }
+
+    function parseOpenVPNConf(content) {
+        try {
+            const lines = content.split('\n')
+            let remoteLine = ""
+            let proto = "udp"
+            let port = "1194"
+            let username = ""
+            let password = ""
+            let authUserPass = false
+
+            for (let line of lines) {
+                line = line.trim()
+
+                if (!line || line.startsWith('#')) {
+                    continue
+                }
+
+                const remoteMatch = line.match(/^remote\s+(\S+)(?:\s+(\d+))?(?:\s+(\S+))?/i)
+                if (remoteMatch) {
+                    remoteLine = remoteMatch[1]
+                    if (remoteMatch[2]) {
+                        port = remoteMatch[2]
+                    }
+                    if (remoteMatch[3]) {
+                        proto = remoteMatch[3].toLowerCase()
+                    }
+                    continue
+                }
+
+
+                const protoMatch = line.match(/^proto\s+(\S+)/i)
+                if (protoMatch) {
+                    proto = protoMatch[1].toLowerCase()
+                    continue
+                }
+
+
+                const portMatch = line.match(/^port\s+(\d+)/i)
+                if (portMatch) {
+                    port = portMatch[1]
+                    continue
+                }
+
+
+                if (line.match(/^auth-user-pass/i)) {
+                    authUserPass = true
+
+                    const authMatch = line.match(/^auth-user-pass\s+(.+)/i)
+                    if (authMatch && authMatch[1].trim() !== "") {
+                    }
+                    continue
+                }
+
+
+                const userMatch = line.match(/^username\s+(.+)/i)
+                if (userMatch) {
+                    username = userMatch[1].trim()
+                    continue
+                }
+
+
+                const passMatch = line.match(/^password\s+(.+)/i)
+                if (passMatch) {
+                    password = passMatch[1].trim()
+                    continue
+                }
+            }
+
+
+            if (remoteLine) {
+                root.openvpnServer = remoteLine
+            }
+            if (port) {
+                root.openvpnPort = port
+            }
+            if (proto) {
+                root.openvpnProtocol = proto
+            }
+            if (username) {
+                root.openvpnUsername = username
+            }
+            if (password) {
+                root.openvpnPassword = password
+            }
+
+
+            if (!root.connectionName && root.pendingImportFilePath) {
+                const fileName = root.pendingImportFilePath.split('/').pop().replace(/\.ovpn$/i, '')
+                root.connectionName = fileName || "OpenVPN Connection"
+            }
+
+            root.waitingForConnectionName = true
+        } catch (error) {
+
+            root.errorMessage = "Failed to parse OpenVPN configuration: " + (error.toString() || "Unknown error")
+        }
+    }
+
+    function generateWireGuardKeys() {
+        try {
+            generatingKeys = true
+            errorMessage = ""
+            generateKeysProcess.running = true
+        } catch (error) {
+
+            generatingKeys = false
+            errorMessage = "Error generating keys: " + error.toString()
+        }
+    }
+
+    function addOpenVPNConnection() {
+        try {
+            if (!connectionName.trim()) {
+                errorMessage = "Connection name is required"
+                return
+            }
+            if (!openvpnServer.trim()) {
+                errorMessage = "Server address is required"
+                return
+            }
+
+            errorMessage = ""
+            const vpnData = `remote=${openvpnServer},port=${openvpnPort},proto=${openvpnProtocol}`
+            const vpnDataWithUser = openvpnUsername.trim() ? `${vpnData},username=${openvpnUsername}` : vpnData
+            const vpnSecrets = openvpnPassword.trim() ? `password=${openvpnPassword}` : ""
+
+            let cmd = ["nmcli", "connection", "add", "type", "vpn", "vpn-type", "openvpn", "con-name", connectionName.trim()]
+
+            if (vpnDataWithUser) {
+                cmd.push("vpn.data", vpnDataWithUser)
+            }
+            if (vpnSecrets) {
+                cmd.push("vpn.secrets", vpnSecrets)
+            }
+            cmd.push("ipv4.method", "auto")
+
+            addConnectionProcess.command = cmd
+            addConnectionProcess.running = true
+        } catch (error) {
+
+            errorMessage = "Error creating OpenVPN connection: " + error.toString()
+        }
+    }
+
+    function addWireGuardConnection() {
+        try {
+            if (!connectionName.trim()) {
+                errorMessage = "Connection name is required"
+                return
+            }
+            if (!wireguardPrivateKey.trim()) {
+                errorMessage = "Private key is required"
+                return
+            }
+            if (!wireguardEndpoint.trim()) {
+                errorMessage = "Endpoint is required"
+                return
+            }
+            if (!wireguardPublicKey.trim()) {
+                errorMessage = "Server public key is required"
+                return
+            }
+
+            errorMessage = ""
+            importingFile = true
+
+            let configContent = "[Interface]\n"
+            configContent += "PrivateKey = " + wireguardPrivateKey.trim() + "\n"
+
+            if (wireguardAddress.trim()) {
+                configContent += "Address = " + wireguardAddress.trim() + "\n"
+            }
+            if (wireguardDNS.trim()) {
+                configContent += "DNS = " + wireguardDNS.trim() + "\n"
+            }
+            if (wireguardMTU.trim()) {
+                configContent += "MTU = " + wireguardMTU.trim() + "\n"
+            }
+
+            configContent += "\n[Peer]\n"
+            configContent += "PublicKey = " + wireguardPublicKey.trim() + "\n"
+            configContent += "Endpoint = " + wireguardEndpoint.trim() + "\n"
+            configContent += "AllowedIPs = " + (wireguardAllowedIPs.trim() || "0.0.0.0/0") + "\n"
+
+            if (wireguardPresharedKey.trim()) {
+                configContent += "PresharedKey = " + wireguardPresharedKey.trim() + "\n"
+            }
+            if (wireguardPersistentKeepalive.trim()) {
+                configContent += "PersistentKeepalive = " + wireguardPersistentKeepalive.trim() + "\n"
+            }
+
+            const tempConfigPath = "/tmp/quickshell_wg_" + Date.now() + ".conf"
+
+            createTempWireGuardConfig.configContent = configContent
+            createTempWireGuardConfig.tempPath = tempConfigPath
+            createTempWireGuardConfig.connectionName = connectionName.trim()
+
+            const escapedPath = tempConfigPath.replace(/'/g, "'\\''")
+            const escapedContent = configContent.replace(/'/g, "'\\''").replace(/\$/g, "\\$").replace(/`/g, "\\`").replace(/\\/g, "\\\\")
+            createTempWireGuardConfig.command = ["bash", "-c", `printf '%s' '${escapedContent}' > '${escapedPath}'`]
+
+            createTempWireGuardConfig.running = true
+        } catch (error) {
+
+            errorMessage = "Error creating WireGuard connection: " + error.toString()
+        }
+    }
+
+    function addIKEv2Connection() {
+        try {
+            if (!connectionName.trim()) {
+                errorMessage = "Connection name is required"
+                return
+            }
+            if (!ikev2Address.trim()) {
+                errorMessage = "Server address is required"
+                return
+            }
+
+            errorMessage = ""
+            const vpnData = `address=${ikev2Address.trim()}`
+            const vpnSecrets = ikev2Password.trim() ? `password=${ikev2Password}` : ""
+
+            let cmd = ["nmcli", "connection", "add", "type", "vpn", "vpn-type", "ikev2", "con-name", connectionName.trim()]
+            cmd.push("vpn.data", vpnData)
+            if (ikev2Username.trim()) {
+                cmd.push("vpn.data", `${vpnData},user=${ikev2Username.trim()}`)
+            }
+            if (vpnSecrets) {
+                cmd.push("vpn.secrets", vpnSecrets)
+            }
+            cmd.push("ipv4.method", "auto")
+
+            addConnectionProcess.command = cmd
+            addConnectionProcess.running = true
+        } catch (error) {
+
+            errorMessage = "Error creating IKEv2 connection: " + error.toString()
+        }
+    }
+
+    function addL2TPConnection() {
+        try {
+            if (!connectionName.trim()) {
+                errorMessage = "Connection name is required"
+                return
+            }
+            if (!l2tpAddress.trim()) {
+                errorMessage = "Server address is required"
+                return
+            }
+
+            errorMessage = ""
+            const vpnData = `gateway=${l2tpAddress.trim()}`
+            const vpnSecrets = []
+            if (l2tpUsername.trim()) {
+                vpnSecrets.push(`user=${l2tpUsername.trim()}`)
+            }
+            if (l2tpPassword.trim()) {
+                vpnSecrets.push(`password=${l2tpPassword.trim()}`)
+            }
+            if (l2tpPsk.trim()) {
+                vpnSecrets.push(`ipsec-psk=${l2tpPsk.trim()}`)
+            }
+
+            let cmd = ["nmcli", "connection", "add", "type", "vpn", "vpn-type", "l2tp", "con-name", connectionName.trim()]
+            cmd.push("vpn.data", vpnData)
+            if (vpnSecrets.length > 0) {
+                cmd.push("vpn.secrets", vpnSecrets.join(","))
+            }
+            cmd.push("ipv4.method", "auto")
+
+            addConnectionProcess.command = cmd
+            addConnectionProcess.running = true
+        } catch (error) {
+
+            errorMessage = "Error creating L2TP connection: " + error.toString()
+        }
+    }
+
+    function addPPTPConnection() {
+        try {
+            if (!connectionName.trim()) {
+                errorMessage = "Connection name is required"
+                return
+            }
+            if (!pptpAddress.trim()) {
+                errorMessage = "Server address is required"
+                return
+            }
+
+            errorMessage = ""
+            const vpnData = `gateway=${pptpAddress.trim()}`
+            const vpnSecrets = []
+            if (pptpUsername.trim()) {
+                vpnSecrets.push(`user=${pptpUsername.trim()}`)
+            }
+            if (pptpPassword.trim()) {
+                vpnSecrets.push(`password=${pptpPassword.trim()}`)
+            }
+
+            let cmd = ["nmcli", "connection", "add", "type", "vpn", "vpn-type", "pptp", "con-name", connectionName.trim()]
+            cmd.push("vpn.data", vpnData)
+            if (vpnSecrets.length > 0) {
+                cmd.push("vpn.secrets", vpnSecrets.join(","))
+            }
+            cmd.push("ipv4.method", "auto")
+
+            addConnectionProcess.command = cmd
+            addConnectionProcess.running = true
+        } catch (error) {
+
+            errorMessage = "Error creating PPTP connection: " + error.toString()
+        }
+    }
+
+    function addStrongSwanConnection() {
+        try {
+            if (!connectionName.trim()) {
+                errorMessage = "Connection name is required"
+                return
+            }
+            if (!strongswanAddress.trim()) {
+                errorMessage = "Server address is required"
+                return
+            }
+
+            errorMessage = ""
+            let vpnData = `address=${strongswanAddress.trim()},method=${strongswanMethod}`
+            if (strongswanCertificate.trim()) {
+                vpnData += `,certificate=${strongswanCertificate.trim()}`
+            }
+            const vpnSecrets = []
+            if (strongswanUsername.trim()) {
+                vpnSecrets.push(`user=${strongswanUsername.trim()}`)
+            }
+            if (strongswanPassword.trim()) {
+                vpnSecrets.push(`password=${strongswanPassword.trim()}`)
+            }
+
+            let cmd = ["nmcli", "connection", "add", "type", "vpn", "vpn-type", "strongswan", "con-name", connectionName.trim()]
+            cmd.push("vpn.data", vpnData)
+            if (vpnSecrets.length > 0) {
+                cmd.push("vpn.secrets", vpnSecrets.join(","))
+            }
+            cmd.push("ipv4.method", "auto")
+
+            addConnectionProcess.command = cmd
+            addConnectionProcess.running = true
+        } catch (error) {
+
+            errorMessage = "Error creating StrongSwan connection: " + error.toString()
+        }
+    }
+
+    function addCiscoConnection() {
+        try {
+            if (!connectionName.trim()) {
+                errorMessage = "Connection name is required"
+                return
+            }
+            if (!ciscoAddress.trim()) {
+                errorMessage = "Server address is required"
+                return
+            }
+
+            errorMessage = ""
+            const vpnData = `gateway=${ciscoAddress.trim()}`
+            if (ciscoGroup.trim()) {
+                vpnData += `,group=${ciscoGroup.trim()}`
+            }
+            const vpnSecrets = []
+            if (ciscoUsername.trim()) {
+                vpnSecrets.push(`user=${ciscoUsername.trim()}`)
+            }
+            if (ciscoPassword.trim()) {
+                vpnSecrets.push(`password=${ciscoPassword.trim()}`)
+            }
+
+            let cmd = ["nmcli", "connection", "add", "type", "vpn", "vpn-type", "openconnect", "con-name", connectionName.trim()]
+            cmd.push("vpn.data", vpnData)
+            if (vpnSecrets.length > 0) {
+                cmd.push("vpn.secrets", vpnSecrets.join(","))
+            }
+            cmd.push("ipv4.method", "auto")
+
+            addConnectionProcess.command = cmd
+            addConnectionProcess.running = true
+        } catch (error) {
+
+            errorMessage = "Error creating Cisco AnyConnect connection: " + error.toString()
+        }
+    }
+
+    function saveConnection() {
+        try {
+            errorMessage = ""
+
+
+            if (pendingImportFilePath && waitingForConnectionName) {
+                waitingForConnectionName = false
+                pendingImportFilePath = ""
+                pendingImportType = ""
+
+            }
+
+
+            if (selectedVpnType === 0) {
+                addOpenVPNConnection()
+            } else if (selectedVpnType === 1) {
+                addWireGuardConnection()
+            } else if (selectedVpnType === 2) {
+                addIKEv2Connection()
+            } else if (selectedVpnType === 3) {
+                addL2TPConnection()
+            } else if (selectedVpnType === 4) {
+                addPPTPConnection()
+            } else if (selectedVpnType === 5) {
+                addStrongSwanConnection()
+            } else if (selectedVpnType === 6) {
+                addCiscoConnection()
+            } else {
+
+                errorMessage = "Unknown VPN type selected"
+            }
+        } catch (error) {
+
+            errorMessage = "Error saving connection: " + error.toString()
+        }
+    }
+
+    visible: false
+    title: "Add VPN Connection"
+    width: 900
+    height: 800
+    backgroundColor: Theme.surfaceContainer
+
+    Widgets.FloatingWindowControls {
+        id: windowControls
+        targetWindow: root
+    }
+
+    FocusScope {
+            id: contentScope
+            anchors.fill: parent
+            focus: true
+
+            Keys.onEscapePressed: event => {
+                root.close()
+                event.accepted = true
+            }
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: Theme.spacingL
+                spacing: Theme.spacingM
+                clip: true
+
+                Item {
+                    width: parent.width
+                    height: 48
+                    
+                    MouseArea {
+                        anchors.fill: parent
+                        onPressed: windowControls.tryStartMove()
+                    }
+
+                    RowLayout {
+                        anchors.fill: parent
+                        spacing: Theme.spacingM
+
+                    EHIcon {
+                        name: "vpn_key"
+                        size: Theme.iconSize
+                        color: Theme.primary
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+
+                    Column {
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: Theme.spacingXS
+
+                        StyledText {
+                            text: "Add VPN Connection"
+                            font.pixelSize: Theme.fontSizeLarge
+                            font.weight: Font.Medium
+                            color: Theme.surfaceText
+                        }
+
+                        StyledText {
+                            text: "Configure a new VPN connection"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceVariantText
+                        }
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    EHActionButton {
+                        iconName: "close"
+                        iconSize: Theme.iconSize - 4
+                        iconColor: Theme.surfaceText
+                        onClicked: () => {
+                            root.close()
+                        }
+                    }
+                }
+                }
+
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: Theme.outlineVariant
+                    opacity: 0.5
+                }
+
+                StyledText {
+                    text: "VPN Type"
+                    font.pixelSize: Theme.fontSizeMedium
+                    font.weight: Font.Medium
+                    color: Theme.surfaceText
+                }
+
+                Row {
+                    width: parent.width
+                    spacing: Theme.spacingS
+
+                    Repeater {
+                        model: root.vpnTypes
+
+                        Rectangle {
+                            property bool isSelected: root.selectedVpnType === index
+
+                            TextMetrics {
+                                id: vpnTypeTextMetrics
+                                font.pixelSize: Theme.fontSizeSmall
+                                text: modelData
+                            }
+
+                            implicitWidth: vpnTypeTextMetrics.width + Theme.spacingS * 2
+                            implicitHeight: 32
+                            width: implicitWidth
+                            height: implicitHeight
+                            radius: Theme.cornerRadius * 0.5
+                            color: isSelected ? Theme.primary : Theme.surfaceContainer
+
+                            StyledText {
+                                anchors.centerIn: parent
+                                text: modelData
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: isSelected ? Theme.onPrimary : Theme.surfaceText
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    root.selectedVpnType = index
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: Theme.outlineVariant
+                    opacity: 0.5
+                }
+
+                Column {
+                    width: parent.width
+                    spacing: Theme.spacingM
+                    visible: root.selectedVpnType === 0
+
+                    StyledText {
+                        text: "OpenVPN Configuration"
+                        font.pixelSize: Theme.fontSizeMedium
+                        font.weight: Font.Medium
+                        color: Theme.surfaceText
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Connection Name"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: openvpnNameField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "My OpenVPN Connection"
+                            text: root.connectionName
+                            onTextChanged: root.connectionName = text
+                            Component.onCompleted: {
+                                if (root.waitingForConnectionName && root.selectedVpnType === 0) {
+                                    Qt.callLater(() => forceActiveFocus())
+                                }
+                            }
+                        }
+
+                        Connections {
+                            target: root
+                            function onWaitingForConnectionNameChanged() {
+                                if (root.waitingForConnectionName && root.selectedVpnType === 0) {
+                                    Qt.callLater(() => {
+                                        if (openvpnNameField) {
+                                            openvpnNameField.forceActiveFocus()
+                                        }
+                                    })
+                                }
+                            }
+                        }
+                    }
+
+                    Row {
+                        width: parent.width
+                        spacing: Theme.spacingM
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Server Address"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: openvpnServerField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "vpn.example.com"
+                                text: root.openvpnServer
+                                onTextChanged: root.openvpnServer = text
+                            }
+                        }
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Port"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: openvpnPortField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "1194"
+                                text: root.openvpnPort
+                                onTextChanged: root.openvpnPort = text
+                            }
+                        }
+                    }
+
+                    Row {
+                        width: parent.width
+                        spacing: Theme.spacingM
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Protocol"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            Rectangle {
+                                width: parent.width
+                                height: 40
+                                radius: Theme.cornerRadius * 0.5
+                                color: Theme.surfaceContainer
+                                border.width: 1
+                                border.color: Theme.outlineVariant
+
+                                Row {
+                                    anchors.centerIn: parent
+                                    spacing: Theme.spacingS
+
+                                    Repeater {
+                                        model: ["udp", "tcp"]
+
+                                        Rectangle {
+                                            property bool isSelected: root.openvpnProtocol === modelData
+
+                                            width: 60
+                                            height: 28
+                                            radius: Theme.cornerRadius * 0.5
+                                            color: isSelected ? Theme.primary : "transparent"
+
+                                            StyledText {
+                                                anchors.centerIn: parent
+                                                text: modelData.toUpperCase()
+                                                font.pixelSize: Theme.fontSizeSmall
+                                                color: isSelected ? Theme.onPrimary : Theme.surfaceText
+                                            }
+
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: root.openvpnProtocol = modelData
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Item { width: (parent.width - Theme.spacingM) / 2; height: 1 }
+                    }
+
+                    Row {
+                        width: parent.width
+                        spacing: Theme.spacingM
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Username (optional)"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: openvpnUsernameField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "username"
+                                text: root.openvpnUsername
+                                onTextChanged: root.openvpnUsername = text
+                            }
+                        }
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Password (optional)"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: openvpnPasswordField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "password"
+                                echoMode: TextInput.Password
+                                text: root.openvpnPassword
+                                onTextChanged: root.openvpnPassword = text
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        width: parent.width
+                        height: 40
+                        radius: Theme.cornerRadius * 0.5
+                        color: importFileMouseArea.containsMouse ? Theme.primaryContainer : Theme.primary
+                        visible: !root.importingFile && !root.waitingForConnectionName
+
+                        StyledText {
+                            anchors.centerIn: parent
+                            text: "Import .ovpn File"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.onPrimary
+                        }
+
+                        MouseArea {
+                            id: importFileMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                root.openFileBrowser()
+                            }
+                        }
+                    }
+
+                    Item {
+                        width: parent.width
+                        height: 40
+                        visible: root.importingFile
+
+                        RowLayout {
+                            anchors.centerIn: parent
+                            spacing: Theme.spacingM
+
+                            EHIcon {
+                                name: "sync"
+                                size: 20
+                                color: Theme.primary
+                                Layout.alignment: Qt.AlignVCenter
+
+                                RotationAnimation on rotation {
+                                    from: 0
+                                    to: 360
+                                    duration: 1000
+                                    loops: Animation.Infinite
+                                    running: root.importingFile
+                                }
+                            }
+
+                            StyledText {
+                                text: "Importing..."
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+                        }
+                    }
+
+                    StyledText {
+                        text: root.waitingForConnectionName ? "Configuration loaded from file. Review and enter a connection name, then click 'Add' to save." : ""
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: Theme.primary
+                        visible: root.waitingForConnectionName && root.selectedVpnType === 0
+                        width: parent.width
+                        wrapMode: Text.WordWrap
+                    }
+                }
+
+                Column {
+                    width: parent.width
+                    spacing: Theme.spacingM
+                    visible: root.selectedVpnType === 1
+
+                    StyledText {
+                        text: "WireGuard Configuration"
+                        font.pixelSize: Theme.fontSizeMedium
+                        font.weight: Font.Medium
+                        color: Theme.surfaceText
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Connection Name"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: wireguardNameField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "My WireGuard Connection"
+                            text: root.connectionName
+                            onTextChanged: root.connectionName = text
+                            Component.onCompleted: {
+                                if (root.waitingForConnectionName && root.selectedVpnType === 1) {
+                                    Qt.callLater(() => forceActiveFocus())
+                                }
+                            }
+                        }
+
+                        Connections {
+                            target: root
+                            function onWaitingForConnectionNameChanged() {
+                                if (root.waitingForConnectionName && root.selectedVpnType === 1) {
+                                    Qt.callLater(() => {
+                                        if (wireguardNameField) {
+                                            wireguardNameField.forceActiveFocus()
+                                        }
+                                    })
+                                }
+                            }
+                        }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Private Key"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        RowLayout {
+                            width: parent.width
+                            spacing: Theme.spacingS
+
+                            EHTextField {
+                                id: wireguardPrivateKeyField
+                                Layout.fillWidth: true
+                                height: 40
+                                placeholderText: "Generate or paste private key"
+                                echoMode: TextInput.Password
+                                text: root.wireguardPrivateKey
+                                onTextChanged: root.wireguardPrivateKey = text
+                            }
+
+                            Rectangle {
+                                id: generateKeysButton
+                                width: 120
+                                height: 40
+                                radius: Theme.cornerRadius * 0.5
+                                color: generateKeysMouseArea.containsMouse ? Theme.primaryContainer : Theme.primary
+                                visible: !root.generatingKeys
+                                Layout.alignment: Qt.AlignVCenter
+
+                                StyledText {
+                                    anchors.centerIn: parent
+                                    text: "Generate"
+                                    font.pixelSize: Theme.fontSizeSmall
+                                    color: Theme.onPrimary
+                                }
+
+                                MouseArea {
+                                    id: generateKeysMouseArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.generateWireGuardKeys()
+                                }
+                            }
+
+                            Item {
+                                width: 120
+                                height: 40
+                                visible: root.generatingKeys
+                                Layout.alignment: Qt.AlignVCenter
+
+                                RowLayout {
+                                    anchors.centerIn: parent
+                                    spacing: Theme.spacingXS
+
+                                    EHIcon {
+                                        name: "sync"
+                                        size: 16
+                                        color: Theme.primary
+                                        Layout.alignment: Qt.AlignVCenter
+
+                                        RotationAnimation on rotation {
+                                            from: 0
+                                            to: 360
+                                            duration: 1000
+                                            loops: Animation.Infinite
+                                            running: root.generatingKeys
+                                        }
+                                    }
+
+                                    StyledText {
+                                        text: "Generating..."
+                                        font.pixelSize: Theme.fontSizeSmall
+                                        color: Theme.surfaceText
+                                        Layout.alignment: Qt.AlignVCenter
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Server Public Key"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: wireguardPublicKeyField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "Server's public key"
+                            text: root.wireguardPublicKey
+                            onTextChanged: root.wireguardPublicKey = text
+                        }
+                    }
+
+                    Row {
+                        width: parent.width
+                        spacing: Theme.spacingM
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Endpoint"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: wireguardEndpointField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "server.example.com:51820"
+                                text: root.wireguardEndpoint
+                                onTextChanged: root.wireguardEndpoint = text
+                            }
+                        }
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Allowed IPs"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: wireguardAllowedIPsField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "0.0.0.0/0"
+                                text: root.wireguardAllowedIPs
+                                onTextChanged: root.wireguardAllowedIPs = text
+                            }
+                        }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Client IP Address (optional)"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: wireguardAddressField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "10.0.0.2/24"
+                            text: root.wireguardAddress
+                            onTextChanged: root.wireguardAddress = text
+                        }
+                    }
+
+                    Rectangle {
+                        width: parent.width
+                        height: 40
+                        radius: Theme.cornerRadius * 0.5
+                        color: importWireGuardMouseArea.containsMouse ? Theme.primaryContainer : Theme.surfaceContainer
+                        border.width: 1
+                        border.color: Theme.outlineVariant
+                        visible: !root.waitingForConnectionName
+
+                        RowLayout {
+                            anchors.centerIn: parent
+                            spacing: Theme.spacingS
+
+                            EHIcon {
+                                name: "file_upload"
+                                size: 18
+                                color: Theme.primary
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            StyledText {
+                                text: "Import .conf file"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+                        }
+
+                        MouseArea {
+                            id: importWireGuardMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                root.openWireGuardFileBrowser()
+                            }
+                        }
+                    }
+
+                    Item {
+                        width: parent.width
+                        height: 40
+                        visible: root.importingFile && root.selectedVpnType === 1
+
+                        RowLayout {
+                            anchors.centerIn: parent
+                            spacing: Theme.spacingM
+
+                            EHIcon {
+                                name: "sync"
+                                size: 20
+                                color: Theme.primary
+                                Layout.alignment: Qt.AlignVCenter
+
+                                RotationAnimation on rotation {
+                                    from: 0
+                                    to: 360
+                                    duration: 1000
+                                    loops: Animation.Infinite
+                                    running: root.importingFile && root.selectedVpnType === 1
+                                }
+                            }
+
+                            StyledText {
+                                text: "Importing..."
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+                        }
+                    }
+
+                    StyledText {
+                        text: root.waitingForConnectionName ? "Configuration loaded from file. Review and enter a connection name, then click 'Add' to save." : ""
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: Theme.primary
+                        visible: root.waitingForConnectionName && root.selectedVpnType === 1
+                        width: parent.width
+                        wrapMode: Text.WordWrap
+                    }
+                }
+
+                Column {
+                    width: parent.width
+                    spacing: Theme.spacingM
+                    visible: root.selectedVpnType === 2
+
+                    StyledText {
+                        text: "IKEv2 Configuration"
+                        font.pixelSize: Theme.fontSizeMedium
+                        font.weight: Font.Medium
+                        color: Theme.surfaceText
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Connection Name"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: ikev2NameField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "My IKEv2 Connection"
+                            text: root.connectionName
+                            onTextChanged: root.connectionName = text
+                        }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Server Address"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: ikev2AddressField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "vpn.example.com"
+                            text: root.ikev2Address
+                            onTextChanged: root.ikev2Address = text
+                        }
+                    }
+
+                    Row {
+                        width: parent.width
+                        spacing: Theme.spacingM
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Username"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: ikev2UsernameField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "username"
+                                text: root.ikev2Username
+                                onTextChanged: root.ikev2Username = text
+                            }
+                        }
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Password"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: ikev2PasswordField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "password"
+                                echoMode: TextInput.Password
+                                text: root.ikev2Password
+                                onTextChanged: root.ikev2Password = text
+                            }
+                        }
+                    }
+                }
+
+                Column {
+                    width: parent.width
+                    spacing: Theme.spacingM
+                    visible: root.selectedVpnType === 3
+
+                    StyledText {
+                        text: "L2TP/IPsec Configuration"
+                        font.pixelSize: Theme.fontSizeMedium
+                        font.weight: Font.Medium
+                        color: Theme.surfaceText
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Connection Name"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: l2tpNameField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "My L2TP Connection"
+                            text: root.connectionName
+                            onTextChanged: root.connectionName = text
+                        }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Server Address"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: l2tpAddressField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "vpn.example.com"
+                            text: root.l2tpAddress
+                            onTextChanged: root.l2tpAddress = text
+                        }
+                    }
+
+                    Row {
+                        width: parent.width
+                        spacing: Theme.spacingM
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Username"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: l2tpUsernameField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "username"
+                                text: root.l2tpUsername
+                                onTextChanged: root.l2tpUsername = text
+                            }
+                        }
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Password"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: l2tpPasswordField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "password"
+                                echoMode: TextInput.Password
+                                text: root.l2tpPassword
+                                onTextChanged: root.l2tpPassword = text
+                            }
+                        }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Pre-shared Key (PSK)"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: l2tpPskField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "IPsec pre-shared key"
+                            echoMode: TextInput.Password
+                            text: root.l2tpPsk
+                            onTextChanged: root.l2tpPsk = text
+                        }
+                    }
+                }
+
+                Column {
+                    width: parent.width
+                    spacing: Theme.spacingM
+                    visible: root.selectedVpnType === 4
+
+                    StyledText {
+                        text: "PPTP Configuration"
+                        font.pixelSize: Theme.fontSizeMedium
+                        font.weight: Font.Medium
+                        color: Theme.surfaceText
+                    }
+
+                    StyledText {
+                        text: "Warning: PPTP is deprecated and insecure. Use only if necessary."
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: Theme.error
+                        width: parent.width
+                        wrapMode: Text.WordWrap
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Connection Name"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: pptpNameField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "My PPTP Connection"
+                            text: root.connectionName
+                            onTextChanged: root.connectionName = text
+                        }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Server Address"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: pptpAddressField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "vpn.example.com"
+                            text: root.pptpAddress
+                            onTextChanged: root.pptpAddress = text
+                        }
+                    }
+
+                    Row {
+                        width: parent.width
+                        spacing: Theme.spacingM
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Username"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: pptpUsernameField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "username"
+                                text: root.pptpUsername
+                                onTextChanged: root.pptpUsername = text
+                            }
+                        }
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Password"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: pptpPasswordField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "password"
+                                echoMode: TextInput.Password
+                                text: root.pptpPassword
+                                onTextChanged: root.pptpPassword = text
+                            }
+                        }
+                    }
+                }
+
+                Column {
+                    width: parent.width
+                    spacing: Theme.spacingM
+                    visible: root.selectedVpnType === 5
+
+                    StyledText {
+                        text: "StrongSwan Configuration"
+                        font.pixelSize: Theme.fontSizeMedium
+                        font.weight: Font.Medium
+                        color: Theme.surfaceText
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Connection Name"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: strongswanNameField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "My StrongSwan Connection"
+                            text: root.connectionName
+                            onTextChanged: root.connectionName = text
+                        }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Server Address"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: strongswanAddressField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "vpn.example.com"
+                            text: root.strongswanAddress
+                            onTextChanged: root.strongswanAddress = text
+                        }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Authentication Method"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        Rectangle {
+                            width: parent.width
+                            height: 40
+                            radius: Theme.cornerRadius * 0.5
+                            color: Theme.surfaceContainer
+                            border.width: 1
+                            border.color: Theme.outlineVariant
+
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: Theme.spacingS
+
+                                Repeater {
+                                    model: ["eap", "psk", "cert"]
+
+                                    Rectangle {
+                                        property bool isSelected: root.strongswanMethod === modelData
+
+                                        width: 80
+                                        height: 28
+                                        radius: Theme.cornerRadius * 0.5
+                                        color: isSelected ? Theme.primary : "transparent"
+
+                                        StyledText {
+                                            anchors.centerIn: parent
+                                            text: modelData.toUpperCase()
+                                            font.pixelSize: Theme.fontSizeSmall
+                                            color: isSelected ? Theme.onPrimary : Theme.surfaceText
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: root.strongswanMethod = modelData
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Row {
+                        width: parent.width
+                        spacing: Theme.spacingM
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Username"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: strongswanUsernameField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "username"
+                                text: root.strongswanUsername
+                                onTextChanged: root.strongswanUsername = text
+                            }
+                        }
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Password"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: strongswanPasswordField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "password"
+                                echoMode: TextInput.Password
+                                text: root.strongswanPassword
+                                onTextChanged: root.strongswanPassword = text
+                            }
+                        }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Certificate Path (optional)"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: strongswanCertificateField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "/path/to/certificate.pem"
+                            text: root.strongswanCertificate
+                            onTextChanged: root.strongswanCertificate = text
+                        }
+                    }
+                }
+
+                Column {
+                    width: parent.width
+                    spacing: Theme.spacingM
+                    visible: root.selectedVpnType === 6
+
+                    StyledText {
+                        text: "Cisco AnyConnect Configuration"
+                        font.pixelSize: Theme.fontSizeMedium
+                        font.weight: Font.Medium
+                        color: Theme.surfaceText
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Connection Name"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: ciscoNameField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "My Cisco AnyConnect Connection"
+                            text: root.connectionName
+                            onTextChanged: root.connectionName = text
+                        }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Server Address"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: ciscoAddressField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "vpn.example.com"
+                            text: root.ciscoAddress
+                            onTextChanged: root.ciscoAddress = text
+                        }
+                    }
+
+                    Row {
+                        width: parent.width
+                        spacing: Theme.spacingM
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Username"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: ciscoUsernameField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "username"
+                                text: root.ciscoUsername
+                                onTextChanged: root.ciscoUsername = text
+                            }
+                        }
+
+                        Column {
+                            width: (parent.width - Theme.spacingM) / 2
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                text: "Password"
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceText
+                            }
+
+                            EHTextField {
+                                id: ciscoPasswordField
+                                width: parent.width
+                                height: 40
+                                placeholderText: "password"
+                                echoMode: TextInput.Password
+                                text: root.ciscoPassword
+                                onTextChanged: root.ciscoPassword = text
+                            }
+                        }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: "Group (optional)"
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                        }
+
+                        EHTextField {
+                            id: ciscoGroupField
+                            width: parent.width
+                            height: 40
+                            placeholderText: "VPN group name"
+                            text: root.ciscoGroup
+                            onTextChanged: root.ciscoGroup = text
+                        }
+                    }
+                }
+
+                Item { width: 1; height: Theme.spacingM }
+
+                StyledText {
+                    text: root.errorMessage
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: Theme.error
+                    visible: root.errorMessage !== ""
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                }
+
+                RowLayout {
+                    width: parent.width
+                    spacing: Theme.spacingM
+
+                    Item {
+                        Layout.fillWidth: true
+                    }
+
+                    Rectangle {
+                        width: 100
+                        height: 36
+                        radius: Theme.cornerRadius * 0.5
+                        color: cancelMouseArea.containsMouse ? Theme.surfaceContainer : Theme.surfaceVariant
+                        Layout.alignment: Qt.AlignVCenter
+
+                        StyledText {
+                            anchors.centerIn: parent
+                            text: "Cancel"
+                            font.pixelSize: Theme.fontSizeMedium
+                            color: Theme.surfaceText
+                        }
+
+                        MouseArea {
+                            id: cancelMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                root.close()
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        width: 100
+                        height: 36
+                        radius: Theme.cornerRadius * 0.5
+                        color: saveMouseArea.containsMouse ? Theme.primaryContainer : Theme.primary
+                        Layout.alignment: Qt.AlignVCenter
+
+                        StyledText {
+                            anchors.centerIn: parent
+                            text: root.waitingForConnectionName ? "Save" : "Add"
+                            font.pixelSize: Theme.fontSizeMedium
+                            color: Theme.onPrimary
+                        }
+
+                        MouseArea {
+                            id: saveMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: saveConnection()
+                        }
+                    }
+
+                    Rectangle {
+                        width: 100
+                        height: 36
+                        radius: Theme.cornerRadius * 0.5
+                        color: cancelImportButtonMouseArea.containsMouse ? Theme.surfaceContainer : Theme.surfaceVariant
+                        visible: root.waitingForConnectionName
+                        Layout.alignment: Qt.AlignVCenter
+
+                        StyledText {
+                            anchors.centerIn: parent
+                            text: "Cancel Import"
+                            font.pixelSize: Theme.fontSizeMedium
+                            color: Theme.surfaceText
+                        }
+
+                        MouseArea {
+                            id: cancelImportButtonMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.cancelImport()
+                        }
+                    }
+                }
+            }
+        }
+
+    property bool pendingFileBrowserOpen: false
+
+    Loader {
+        id: fileBrowserLoader
+        active: false
+        asynchronous: true
+
+        onStatusChanged: {
+            if (status === Loader.Ready) {
+                if (pendingFileBrowserOpen && item && typeof item.open === 'function') {
+                    Qt.callLater(() => {
+                        if (item && typeof item.open === 'function') {
+                            item.open()
+                            pendingFileBrowserOpen = false
+                        }
+                    })
+                }
+            } else if (status === Loader.Error) {
+
+                pendingFileBrowserOpen = false
+            }
+        }
+
+        onItemChanged: {
+            if (item && fileBrowserLoader.status === Loader.Ready && pendingFileBrowserOpen) {
+                Qt.callLater(() => {
+                    if (item && typeof item.open === 'function') {
+                        item.open()
+                        pendingFileBrowserOpen = false
+                    }
+                })
+            }
+        }
+
+        sourceComponent: Component {
+            FileBrowserModal {
+                browserTitle: root.selectedVpnType === 1 ? "Select WireGuard Configuration File" : "Select OpenVPN Configuration File"
+                browserIcon: "vpn_key"
+                browserType: "generic"
+                fileExtensions: root.selectedVpnType === 1 ? ["*.conf"] : ["*.ovpn"]
+                showHiddenFiles: true
+                allowStacking: true
+
+                // Restore closeOnBackgroundClick when file browser closes without selection
+                Connections {
+                    target: fileBrowserLoader.item
+                    function onDialogClosed() {
+                        root.closeOnBackgroundClick = true
+                    }
+                }
+
+                onFileSelected: path => {
+                    try {
+                        const cleanPath = path.replace(/^file:\/\//, '')
+                        root.pendingImportFilePath = cleanPath
+                        root.pendingImportType = root.selectedVpnType === 1 ? "wireguard" : "openvpn"
+                        root.connectionName = ""
+
+                        if (root.selectedVpnType === 1) {
+                            wireguardConfFileView.path = ""
+                            wireguardConfFileView.path = cleanPath
+                        } else {
+                            openvpnConfFileView.path = ""
+                            openvpnConfFileView.path = cleanPath
+                        }
+
+                        if (fileBrowserLoader.item) {
+                            fileBrowserLoader.item.close()
+                        }
+                        // Restore background click closing
+                        root.closeOnBackgroundClick = true
+                    } catch (error) {
+
+                    }
+                }
+            }
+        }
+    }
+
+    function openFileBrowser() {
+        try {
+            pendingFileBrowserOpen = true
+
+            if (!fileBrowserLoader.active) {
+                fileBrowserLoader.active = true
+            }
+
+            if (fileBrowserLoader.status === Loader.Ready && fileBrowserLoader.item) {
+                Qt.callLater(() => {
+                    if (fileBrowserLoader.item && typeof fileBrowserLoader.item.open === 'function') {
+                        // Set parentModal for proper focus handling
+                        fileBrowserLoader.item.parentModal = root
+                        // Disable background click closing while file browser is open
+                        root.closeOnBackgroundClick = false
+                        fileBrowserLoader.item.open()
+                        pendingFileBrowserOpen = false
+                    }
+                })
+            }
+        } catch (error) {
+
+            pendingFileBrowserOpen = false
+        }
+    }
+
+    function openWireGuardFileBrowser() {
+        openFileBrowser()
+    }
+
+    FileView {
+        id: wireguardConfFileView
+        blockWrites: true
+        blockLoading: false
+        atomicWrites: true
+        printErrors: true
+
+        onLoaded: {
+            try {
+                const content = text()
+                root.parseWireGuardConf(content)
+            } catch (error) {
+
+                root.errorMessage = "Failed to parse configuration file: " + (error || "Unknown error")
+            }
+        }
+
+        onLoadFailed: (error) => {
+
+            root.importingFile = false
+            root.errorMessage = "Failed to read configuration file: " + (error || "Unknown error")
+        }
+    }
+
+    FileView {
+        id: openvpnConfFileView
+        blockWrites: true
+        blockLoading: false
+        atomicWrites: true
+        printErrors: true
+
+        onLoaded: {
+            try {
+                const content = text()
+                root.parseOpenVPNConf(content)
+            } catch (error) {
+
+                root.errorMessage = "Failed to parse configuration file: " + (error || "Unknown error")
+            }
+        }
+
+        onLoadFailed: (error) => {
+
+            root.importingFile = false
+            root.errorMessage = "Failed to read configuration file: " + (error || "Unknown error")
+        }
+    }
+
+    Process {
+        id: importProcess
+        running: false
+        command: []
+        property string pendingConnectionName: ""
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (text.trim()) {
+                    const lines = text.trim().split('\n')
+                    for (const line of lines) {
+                        const match = line.match(/Connection\s+['"]([^'"]+)['"]/i) || line.match(/([a-f0-9-]{36})/i)
+                        if (match) {
+                            importProcess.importedConnectionId = match[1]
+                            break
+                        }
+                    }
+                }
+            }
+        }
+
+        stderr: StdioCollector {
+        }
+
+        property string importedConnectionId: ""
+
+        onStarted: {
+            importedConnectionId = ""
+        }
+
+        onExited: exitCode => {
+            if (exitCode === 0) {
+                if (pendingConnectionName && pendingConnectionName.trim()) {
+                    findImportedConnection.running = true
+                } else {
+                    root.importingFile = false
+                    try {
+                        ToastService.showInfo("VPN connection imported successfully")
+                        if (VpnService) {
+                            VpnService.refreshAll()
+                        }
+                        root.close()
+                    } catch (error) {
+
+                    }
+                }
+            } else {
+
+                root.importingFile = false
+                const errorMsg = importProcess.stderr.text || "Failed to import configuration file"
+                root.errorMessage = errorMsg
+            }
+        }
+    }
+
+    Process {
+        id: findImportedConnection
+        running: false
+        command: []
+
+        onStarted: {
+            const vpnType = root.pendingImportType === "wireguard" ? "wireguard" : "vpn"
+            command = ["bash", "-c", `nmcli -t -f NAME,UUID,TYPE connection show | grep ':${vpnType}$' | tail -1 | cut -d: -f2`]
+        }
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const uuid = text.trim()
+                if (uuid) {
+                    renameConnectionProcess.command = ["nmcli", "connection", "modify", "uuid", uuid, "connection.id", importProcess.pendingConnectionName]
+                    renameConnectionProcess.running = true
+                } else {
+                    root.importingFile = false
+                    ToastService.showInfo("VPN connection imported (could not rename)")
+                    if (VpnService) {
+                        VpnService.refreshAll()
+                    }
+                    root.close()
+                }
+            }
+        }
+
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                root.importingFile = false
+                ToastService.showInfo("VPN connection imported (could not rename)")
+                if (VpnService) {
+                    VpnService.refreshAll()
+                }
+                root.close()
+            }
+        }
+    }
+
+    Process {
+        id: renameConnectionProcess
+        running: false
+        command: []
+
+        onExited: exitCode => {
+            root.importingFile = false
+            if (exitCode === 0) {
+                ToastService.showInfo("VPN connection imported and saved as '" + importProcess.pendingConnectionName + "'")
+                if (VpnService) {
+                    VpnService.refreshAll()
+                }
+                root.close()
+            } else {
+                ToastService.showInfo("VPN connection imported (could not rename)")
+                if (VpnService) {
+                    VpnService.refreshAll()
+                }
+                root.close()
+            }
+        }
+    }
+
+    Process {
+        id: generateKeysProcess
+        running: false
+        command: ["wg", "genkey"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    root.wireguardPrivateKey = text.trim()
+                    generatePubkeyProcess.command = ["sh", "-c", "echo '" + root.wireguardPrivateKey + "' | wg pubkey"]
+                    generatePubkeyProcess.running = true
+                } catch (error) {
+
+                    root.generatingKeys = false
+                    root.errorMessage = "Error processing keys: " + error.toString()
+                }
+            }
+        }
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                root.generatingKeys = false
+                root.errorMessage = "Failed to generate keys. Is WireGuard installed?"
+            }
+        }
+    }
+
+    Process {
+        id: generatePubkeyProcess
+        running: false
+        command: []
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    root.wireguardPublicKey = text.trim()
+                    root.generatingKeys = false
+                } catch (error) {
+
+                    root.generatingKeys = false
+                    root.errorMessage = "Error processing public key: " + error.toString()
+                }
+            }
+        }
+        onExited: exitCode => {
+            root.generatingKeys = false
+            if (exitCode !== 0) {
+                root.errorMessage = "Failed to generate public key"
+            }
+        }
+    }
+
+    Process {
+        id: createTempWireGuardConfig
+        running: false
+        command: []
+        property string configContent: ""
+        property string tempPath: ""
+        property string connectionName: ""
+
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text.trim()) {
+
+                }
+            }
+        }
+
+        stdout: StdioCollector {
+        }
+
+        onExited: exitCode => {
+            if (exitCode === 0) {
+                importWireGuardFromTemp.tempPath = createTempWireGuardConfig.tempPath
+                importWireGuardFromTemp.connectionName = createTempWireGuardConfig.connectionName
+
+                const wg0Path = "/tmp/wg0.conf"
+                if (!ShellUtils.isValidPath(createTempWireGuardConfig.tempPath) || !ShellUtils.isValidPath(wg0Path)) {
+                    root.importingFile = false
+                    root.errorMessage = "Invalid file path"
+                    return
+                }
+                const escapedTempPath = ShellUtils.escapeShellArg(createTempWireGuardConfig.tempPath)
+                const escapedWg0Path = ShellUtils.escapeShellArg(wg0Path)
+                importWireGuardFromTemp.command = ["bash", "-c", `cp ${escapedTempPath} ${escapedWg0Path} && nmcli connection import type wireguard file ${escapedWg0Path}`]
+
+                importWireGuardFromTemp.running = true
+            } else {
+
+                root.importingFile = false
+                root.errorMessage = "Failed to create temporary configuration file. Exit code: " + exitCode
+            }
+        }
+    }
+
+    Process {
+        id: importWireGuardFromTemp
+        running: false
+        command: []
+        property string tempPath: ""
+        property string connectionName: ""
+        property string importedConnectionId: ""
+
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text.trim()) {
+
+                }
+            }
+        }
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (text.trim()) {
+                    const lines = text.trim().split('\n')
+                    for (const line of lines) {
+                        const uuidMatch = line.match(/([a-f0-9-]{36})/i)
+                        const nameMatch = line.match(/Connection\s+['"]([^'"]+)['"]/i)
+                        if (uuidMatch) {
+                            importWireGuardFromTemp.importedConnectionId = uuidMatch[1]
+                            break
+                        } else if (nameMatch) {
+                            importWireGuardFromTemp.importedConnectionName = nameMatch[1]
+                            break
+                        }
+                    }
+                }
+            }
+        }
+
+        property string importedConnectionName: ""
+
+        onExited: exitCode => {
+            if (tempPath) {
+                cleanupTempFile.path = tempPath
+                cleanupTempFile.running = true
+            }
+            cleanupTempFile2.path = "/tmp/wg0.conf"
+            cleanupTempFile2.running = true
+
+            if (exitCode === 0) {
+                if (importedConnectionId) {
+                    renameImportedWireGuard.connectionName = connectionName
+                    renameImportedWireGuard.importedConnectionId = importedConnectionId
+                    renameImportedWireGuard.running = true
+                } else if (importedConnectionName) {
+                    renameImportedWireGuard.connectionName = connectionName
+                    renameImportedWireGuard.importedConnectionName = importedConnectionName
+                    renameImportedWireGuard.running = true
+                } else {
+                    renameImportedWireGuard.connectionName = connectionName
+                    renameImportedWireGuard.running = true
+                }
+            } else {
+
+                root.importingFile = false
+                root.errorMessage = "Failed to import WireGuard configuration. Check console for details."
+            }
+        }
+    }
+
+    Process {
+        id: renameImportedWireGuard
+        running: false
+        command: []
+        property string connectionName: ""
+        property string importedConnectionId: ""
+        property string importedConnectionName: ""
+
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text.trim()) {
+
+                }
+            }
+        }
+
+        onStarted: {
+            const escapedName = connectionName.replace(/'/g, "'\\''")
+            if (importedConnectionId) {
+                command = ["nmcli", "connection", "modify", "uuid", importedConnectionId, "connection.id", connectionName]
+            } else if (importedConnectionName) {
+                const escapedOldName = importedConnectionName.replace(/'/g, "'\\''")
+                command = ["bash", "-c", `nmcli connection modify '${escapedOldName}' connection.id '${escapedName}'`]
+            } else {
+                command = ["bash", "-c", `wg_connections=$(nmcli -t -f UUID,NAME,TYPE connection show | grep ':wireguard$' | grep -E '^[^:]+:(wg[0-9]+|wg0):wireguard$'); if [ -n "$wg_connections" ]; then most_recent=$(echo "$wg_connections" | tail -1); uuid=$(echo "$most_recent" | cut -d: -f1); nmcli connection modify uuid "$uuid" connection.id '${escapedName}'; else all_wg=$(nmcli -t -f UUID,NAME,TYPE connection show | grep ':wireguard$'); if [ -z "$all_wg" ]; then echo "Connection not found"; exit 1; fi; most_recent_uuid=$(echo "$all_wg" | tail -1 | cut -d: -f1); nmcli connection modify uuid "$most_recent_uuid" connection.id '${escapedName}'; fi`]
+            }
+        }
+
+        onExited: exitCode => {
+            if (exitCode === 0) {
+                applyWireGuardSettings.connectionName = connectionName
+                applyWireGuardSettings.running = true
+            } else {
+                applyWireGuardSettings.connectionName = connectionName
+                applyWireGuardSettings.running = true
+            }
+        }
+    }
+
+    Process {
+        id: applyWireGuardSettings
+        running: false
+        command: []
+        property string connectionName: ""
+
+        onStarted: {
+            let cmd = ["nmcli", "connection", "modify", connectionName]
+            let hasChanges = false
+
+            if (root.wireguardMTU.trim()) {
+                cmd.push("wireguard.mtu", root.wireguardMTU.trim())
+                hasChanges = true
+            }
+
+            if (root.wireguardDNS.trim()) {
+                function splitDNS(dnsString) {
+                    const dnsServers = dnsString.split(',').map(dns => dns.trim()).filter(dns => dns)
+                    const ipv4 = []
+                    const ipv6 = []
+                    for (const dns of dnsServers) {
+                        if (dns.includes(':')) {
+                            ipv6.push(dns)
+                        } else {
+                            ipv4.push(dns)
+                        }
+                    }
+                    return { ipv4: ipv4.join(','), ipv6: ipv6.join(',') }
+                }
+
+                const dns = splitDNS(root.wireguardDNS.trim())
+                if (dns.ipv4) {
+                    cmd.push("ipv4.dns", dns.ipv4)
+                    hasChanges = true
+                }
+                if (dns.ipv6) {
+                    cmd.push("ipv6.dns", dns.ipv6)
+                    hasChanges = true
+                }
+            }
+
+            if (hasChanges) {
+                command = cmd
+            } else {
+                command = ["true"]
+            }
+        }
+
+        onExited: exitCode => {
+            root.importingFile = false
+            if (exitCode === 0) {
+                try {
+                    ToastService.showInfo("VPN connection added successfully")
+                    if (VpnService) {
+                        VpnService.refreshAll()
+                    }
+                    root.close()
+                } catch (error) {
+
+                }
+            } else {
+                ToastService.showInfo("VPN connection added (some settings may need manual configuration)")
+                if (VpnService) {
+                    VpnService.refreshAll()
+                }
+                root.close()
+            }
+        }
+    }
+
+    Process {
+        id: cleanupTempFile
+        running: false
+        command: []
+        property string path: ""
+
+        onStarted: {
+            command = ["rm", "-f", path]
+        }
+
+    }
+
+    Process {
+        id: cleanupTempFile2
+        running: false
+        command: []
+        property string path: ""
+
+        onStarted: {
+            command = ["rm", "-f", path]
+        }
+    }
+
+    Process {
+        id: addConnectionProcess
+        running: false
+        command: []
+
+        onExited: exitCode => {
+            if (exitCode === 0) {
+                try {
+                    ToastService.showInfo("VPN connection added successfully")
+                    if (VpnService) {
+                        VpnService.refreshAll()
+                    }
+                    root.close()
+                } catch (error) {
+                }
+            } else {
+                root.errorMessage = "Failed to add VPN connection. Check your configuration."
+            }
+        }
+    }
+}
+

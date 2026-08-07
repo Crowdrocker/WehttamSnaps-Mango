@@ -1,0 +1,182 @@
+import QtQuick
+import qs.Common
+import qs.Widgets
+
+Item {
+    id: toggle
+
+    property bool checked: false
+    property bool enabled: true
+    property bool toggling: false
+    property string text: ""
+    property string description: ""
+    property bool hideText: false
+
+    property real scaleFactor: Appearance.combinedScale
+
+    signal clicked
+    signal toggled(bool checked)
+
+    readonly property bool showText: text && !hideText
+
+    readonly property int trackWidth: Math.round(52 * scaleFactor)
+    readonly property int trackHeight: Math.round(30 * scaleFactor)
+    readonly property int insetCircle: Math.round(24 * scaleFactor)
+
+    width: showText ? parent.width : trackWidth
+    height: showText ? 56 : trackHeight
+
+    function handleClick() {
+        if (!enabled) return
+        checked = !checked
+        clicked()
+        toggled(checked)
+    }
+
+    StyledRect {
+        id: background
+        anchors.fill: parent
+        radius: showText ? Theme.cornerRadius : 0
+        color: showText ? Theme.surfaceHover : "transparent"
+        visible: showText
+
+        StateLayer {
+            visible: showText
+            disabled: !toggle.enabled
+            stateColor: Theme.primary
+            cornerRadius: parent.radius
+            onClicked: toggle.handleClick()
+        }
+    }
+
+    Row {
+        anchors.left: parent.left
+        anchors.right: toggleTrack.left
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.leftMargin: Theme.spacingL
+        anchors.rightMargin: Theme.spacingL
+        spacing: 4
+        visible: showText
+
+        Column {
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 4
+
+            StyledText {
+                text: toggle.text
+                font.pixelSize: Theme.fontSizeMedium
+                font.weight: Font.Medium
+                opacity: toggle.enabled ? 1 : 0.4
+            }
+
+            StyledText {
+                text: toggle.description
+                font.pixelSize: Theme.fontSizeSmall
+                color: Theme.surfaceVariantText
+                wrapMode: Text.WordWrap
+                width: Math.min(implicitWidth, toggle.width - 120)
+                visible: toggle.description.length > 0
+            }
+        }
+    }
+
+    StyledRect {
+        id: toggleTrack
+
+        width: showText ? trackWidth : Math.max(parent.width, trackWidth)
+        height: showText ? trackHeight : Math.max(parent.height, trackHeight)
+        anchors.right: parent.right
+        anchors.rightMargin: showText ? Theme.spacingL : 0
+        anchors.verticalCenter: parent.verticalCenter
+        radius: height / 2
+
+        color: (checked && enabled) ? Theme.primary : Theme.surfaceVariantAlpha
+        opacity: toggling ? 0.6 : (enabled ? 1 : 0.4)
+
+        border.color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.12)
+        border.width: 1
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Theme.shortDuration
+                easing.type: Theme.standardEasing
+            }
+        }
+
+        readonly property int pad: Math.round((height - thumb.width) / 2)
+        readonly property int edgeLeft: pad
+        readonly property int edgeRight: width - thumb.width - pad
+
+        StyledRect {
+            id: thumb
+
+            width: (checked && enabled) ? insetCircle : insetCircle - 4
+            height: (checked && enabled) ? insetCircle : insetCircle - 4
+            radius: width / 2
+            anchors.verticalCenter: parent.verticalCenter
+
+            color: (checked && enabled) ? Theme.surface : Theme.outline
+            border.color: (checked && enabled) ? Theme.outline : Theme.outline
+            border.width: (checked && enabled) ? 1 : 2
+
+            x: (checked && enabled) ? toggleTrack.edgeRight : toggleTrack.edgeLeft
+
+            Behavior on x {
+                NumberAnimation {
+                    duration: Appearance.anim.durations.normal
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Appearance.anim.curves.emphasizedDecel
+                }
+            }
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Appearance.anim.durations.normal
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Appearance.anim.curves.emphasized
+                }
+            }
+
+            Behavior on border.width {
+                NumberAnimation {
+                    duration: Appearance.anim.durations.normal
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Appearance.anim.curves.emphasized
+                }
+            }
+
+            EHIcon {
+                id: checkIcon
+                anchors.centerIn: parent
+                name: "check"
+                size: 20
+                color: (checked && enabled) ? Theme.primaryText : Theme.surfaceText
+                filled: true
+                opacity: checked && enabled ? 1 : 0
+                scale: checked && enabled ? 1 : 0.6
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Anims.durShort
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Anims.emphasized
+                    }
+                }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: Anims.durShort
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Anims.emphasized
+                    }
+                }
+            }
+        }
+
+        StateLayer {
+            disabled: !toggle.enabled
+            stateColor: Theme.primary
+            cornerRadius: parent.radius
+            onClicked: toggle.handleClick()
+        }
+    }
+}

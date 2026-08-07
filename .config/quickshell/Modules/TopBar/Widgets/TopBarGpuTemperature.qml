@@ -1,0 +1,218 @@
+import QtQuick
+import QtQuick.Controls
+import qs.Common
+import qs.Services
+import qs.Widgets
+
+Rectangle {
+    id: root
+
+    property bool showPercentage: true
+    property bool showIcon: true
+    property var toggleProcessList
+    property string section: "right"
+    property var popupTarget: null
+    property var parentScreen: null
+    property var widgetData: null
+    property real barHeight: 48
+    property real widgetHeight: 30
+    property int selectedGpuIndex: (widgetData && widgetData.selectedGpuIndex !== undefined) ? widgetData.selectedGpuIndex : 0
+    property bool isBarVertical: SettingsData.topBarPosition === "left" || SettingsData.topBarPosition === "right"
+    readonly property real horizontalPadding: SettingsData.topBarNoBackground ? 0 : Math.max(Theme.spacingXS, Theme.spacingS * (widgetHeight / 30))
+    property real displayTemp: {
+        if (!DgopService.availableGpus || DgopService.availableGpus.length === 0) {
+            return 0;
+        }
+
+        if (selectedGpuIndex >= 0 && selectedGpuIndex < DgopService.availableGpus.length) {
+            return DgopService.availableGpus[selectedGpuIndex].temperature || 0;
+        }
+
+        return 0;
+    }
+
+    function updateWidgetPciId(pciId) {
+        const sections = ["left", "center", "right"];
+        for (let s = 0; s < sections.length; s++) {
+            const sectionId = sections[s];
+            let widgets = [];
+            if (sectionId === "left") {
+                widgets = SettingsData.topBarLeftWidgets.slice();
+            } else if (sectionId === "center") {
+                widgets = SettingsData.topBarCenterWidgets.slice();
+            } else if (sectionId === "right") {
+                widgets = SettingsData.topBarRightWidgets.slice();
+            }
+            for (let i = 0; i < widgets.length; i++) {
+                const widget = widgets[i];
+                if (typeof widget === "object" && widget.id === "gpuTemp" && (!widget.pciId || widget.pciId === "")) {
+                    widgets[i] = {
+                        "id": widget.id,
+                        "enabled": widget.enabled !== undefined ? widget.enabled : true,
+                        "selectedGpuIndex": 0,
+                        "pciId": pciId
+                    };
+                    if (sectionId === "left") {
+                        SettingsData.setTopBarLeftWidgets(widgets);
+                    } else if (sectionId === "center") {
+                        SettingsData.setTopBarCenterWidgets(widgets);
+                    } else if (sectionId === "right") {
+                        SettingsData.setTopBarRightWidgets(widgets);
+                    }
+                    return ;
+                }
+            }
+        }
+    }
+
+    width: isBarVertical ? widgetHeight : (gpuTempContent.implicitWidth + horizontalPadding * 2)
+    height: isBarVertical ? (gpuTempContent.implicitHeight + horizontalPadding * 2) : widgetHeight
+    radius: SettingsData.topBarNoBackground ? 0 : Theme.cornerRadius
+    color: {
+        if (SettingsData.topBarNoBackground) {
+            return "transparent";
+        }
+
+        const baseColor = gpuArea.containsMouse ? Theme.widgetBaseHoverColor : Theme.widgetBaseBackgroundColor;
+        return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, baseColor.a * Theme.widgetTransparency);
+    }
+    Component.onCompleted: {
+        DgopService.addRef(["gpu"]);
+        if (widgetData && widgetData.pciId) {
+            DgopService.addGpuPciId(widgetData.pciId);
+        } else {
+            autoSaveTimer.running = true;
+        }
+    }
+    Component.onDestruction: {
+        DgopService.removeRef(["gpu"]);
+        if (widgetData && widgetData.pciId) {
+            DgopService.removeGpuPciId(widgetData.pciId);
+        }
+
+    }
+
+    Connections {
+        function onWidgetDataChanged() {
+            root.selectedGpuIndex = Qt.binding(() => {
+                return (root.widgetData && root.widgetData.selectedGpuIndex !== undefined) ? root.widgetData.selectedGpuIndex : 0;
+            });
+        }
+
+        target: SettingsData
+    }
+
+    MouseArea {
+        id: gpuArea
+
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onPressed: {
+            if (popupTarget && popupTarget.setTriggerPosition) {
+                const globalPos = mapToGlobal(0, 0);
+                const currentScreen = parentScreen || Screen;
+                
+                let triggerX, triggerY;
+                if (isBarVertical) {
+                    if (SettingsData.topBarPosition === "left") {
+                        triggerX = globalPos.x + width + Theme.spacingXS;
+                        triggerY = globalPos.y;
+                    } else {
+                        triggerX = globalPos.x - Theme.spacingXS;
+                        triggerY = globalPos.y;
+                    }
+                } else {
+                    triggerX = globalPos.x;
+                    if (SettingsData.topBarPosition === "top") {
+                        triggerY = globalPos.y + height + Theme.spacingXS;
+                    } else {
+                        triggerY = globalPos.y - Theme.spacingXS;
+                    }
+                }
+                
+                popupTarget.setTriggerPosition(triggerX, triggerY, isBarVertical ? height : width, section, currentScreen);
+            }
+            DgopService.setSortBy("cpu");
+            if (root.toggleProcessList) {
+                root.toggleProcessList();
+            }
+
+        }
+    }
+
+    Row {
+        id: gpuTempContent
+
+        anchors.centerIn: parent
+        spacing: 3
+
+        EHIcon {
+            name: "auto_awesome_mosaic"
+            size: Theme.iconSize - 8
+            color: {
+                if (root.displayTemp > 80) {
+                    return Theme.tempDanger;
+                }
+
+                if (root.displayTemp > 65) {
+                    return Theme.tempWarning;
+                }
+
+                return Theme.surfaceText;
+            }
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
+        StyledText {
+            text: {
+                if (root.displayTemp === undefined || root.displayTemp === null || root.displayTemp === 0) {
+                    return "--°";
+                }
+
+                return Math.round(root.displayTemp) + "°";
+            }
+            font.pixelSize: Theme.fontSizeSmall
+            font.weight: Font.Medium
+            color: Theme.surfaceText
+            anchors.verticalCenter: parent.verticalCenter
+            horizontalAlignment: Text.AlignLeft
+            elide: Text.ElideNone
+
+            StyledTextMetrics {
+                id: gpuTempBaseline
+                font.pixelSize: Theme.fontSizeSmall
+                font.weight: Font.Medium
+                text: "100°"
+            }
+
+            width: Math.max(gpuTempBaseline.width, paintedWidth)
+
+            Behavior on width {
+                NumberAnimation {
+                    duration: 120
+                    easing.type: Easing.OutCubic
+                }
+            }
+        }
+
+    }
+
+    Timer {
+        id: autoSaveTimer
+
+        interval: 100
+        running: false
+        onTriggered: {
+            if (DgopService.availableGpus && DgopService.availableGpus.length > 0) {
+                const firstGpu = DgopService.availableGpus[0];
+                if (firstGpu && firstGpu.pciId) {
+                    updateWidgetPciId(firstGpu.pciId);
+                    DgopService.addGpuPciId(firstGpu.pciId);
+                }
+            }
+        }
+    }
+
+
+}

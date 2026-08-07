@@ -1,0 +1,9 @@
+ActionTile 1.0 ActionTile.qml
+DetailHost 1.0 DetailHost.qml
+EditControls 1.0 EditControls.qml
+EditModeOverlay 1.0 EditModeOverlay.qml
+HeaderPane 1.0 HeaderPane.qml
+PowerButton 1.0 PowerButton.qml
+PowerOptionsPane 1.0 PowerOptionsPane.qml
+Typography 1.0 Typography.qml
+WidgetGrid 1.0 WidgetGrid.qml

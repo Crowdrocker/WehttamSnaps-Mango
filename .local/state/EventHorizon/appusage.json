@@ -1,0 +1,36 @@
+{
+  "appUsageRanking": {
+    "org.kde.kate": {
+      "name": "Kate",
+      "exec": "kate -b %U",
+      "icon": "kate",
+      "comment": "KDE Advanced Text Editor",
+      "usageCount": 3,
+      "lastUsed": 1786081877633
+    },
+    "org.gnome.DiskUtility": {
+      "name": "Disks",
+      "exec": "gnome-disks",
+      "icon": "org.gnome.DiskUtility",
+      "comment": "Manage Drives and Media",
+      "usageCount": 1,
+      "lastUsed": 1786080477926
+    },
+    "firefox": {
+      "name": "Firefox",
+      "exec": "/usr/lib/firefox/firefox %u",
+      "icon": "firefox",
+      "comment": "Fast and private browser",
+      "usageCount": 1,
+      "lastUsed": 1786080572890
+    },
+    "org.gnome.Nautilus": {
+      "name": "Files",
+      "exec": "nautilus --new-window %U",
+      "icon": "org.gnome.Nautilus",
+      "comment": "Access and organize files",
+      "usageCount": 1,
+      "lastUsed": 1786081537676
+    }
+  }
+}

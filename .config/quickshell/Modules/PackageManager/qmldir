@@ -1,0 +1,16 @@
+module qs.Modules.PackageManager
+
+PackageManagerModal       1.0  PackageManagerModal.qml
+PackageManagerSettings    1.0  PackageManagerSettings.qml
+PackageManagerSidebar     1.0  PackageManagerSidebar.qml
+PKGHomeTab                1.0  PKGHomeTab.qml
+PKGTabBar                 1.0  PKGTabBar.qml
+PKGCard                   1.0  PKGCard.qml
+PKGSourceBadge            1.0  PKGSourceBadge.qml
+PKGSearchTab              1.0  PKGSearchTab.qml
+PKGInstalledTab           1.0  PKGInstalledTab.qml
+PKGUpdatesTab             1.0  PKGUpdatesTab.qml
+PKGLocalInstallTab        1.0  PKGLocalInstallTab.qml
+PKGLocalInstallWindow     1.0  PKGLocalInstallWindow.qml
+PKGUpgradeWindow        1.0  PKGUpgradeWindow.qml
+InstallPopupWindow    1.0  InstallPopupWindow.qml

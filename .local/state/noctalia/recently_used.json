@@ -1,0 +1,18 @@
+{
+  "Applications": [
+    "/usr/share/applications/org.kde.dolphin.desktop",
+    "/usr/share/applications/com.mitchellh.ghostty.desktop",
+    "/usr/share/applications/com.shellyorg.shelly.desktop",
+    "/usr/share/applications/firefox.desktop",
+    "/usr/share/applications/steam.desktop",
+    "/usr/share/applications/com.github.tchx84.Flatseal.desktop",
+    "/var/lib/flatpak/exports/share/applications/io.github.Faugus.faugus-launcher.desktop",
+    "/usr/share/applications/org.gnome.Nautilus.desktop",
+    "/usr/share/applications/net.davidotek.pupgui2.desktop",
+    "/usr/share/applications/org.cachyos.scx-manager.desktop",
+    "/usr/share/applications/org.kde.konsole.desktop",
+    "/usr/share/applications/org.gnome.DiskUtility.desktop",
+    "/usr/share/applications/org.kde.kate.desktop",
+    "/usr/share/applications/cachyos-hello.desktop"
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "name": "eh-theme",
+  "displayName": "EH - Event Horizon Theme",
+  "description": "Dynamic theme using matugen base16 terminal colors — auto-updated by Event Horizon",
+  "publisher": "EventHorizon",
+  "version": "0.0.3",
+  "icon": "eventlogo.png",
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "keywords": [
+    "eh",
+    "event",
+    "material",
+    "eventshell",
+    "eventhorizon"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mattscreative/eventMaterialShell"
+  },
+  "contributes": {
+    "themes": [
+      {
+        "label": "Dynamic Base16 EventShell",
+        "uiTheme": "vs-dark",
+        "path": "./themes/eventshell-default.json",
+        "_watch": true
+      },
+      {
+        "label": "Dynamic Base16 EventShell (Dark)",
+        "uiTheme": "vs-dark",
+        "path": "./themes/eventshell-dark.json",
+        "_watch": true
+      },
+      {
+        "label": "Dynamic Base16 EventShell (Light)",
+        "uiTheme": "vs",
+        "path": "./themes/eventshell-light.json",
+        "_watch": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║        WehttamSnaps — SwayFX Configuration                      ║
+# ║        github.com/Crowdrocker  |  twitch.tv/WehttamSnaps        ║
+# ║                                                                  ║
+# ║  This is the entry-point config. All sections are split into     ║
+# ║  config.d/ for easier editing and maintenance.                   ║
+# ║                                                                  ║
+# ║  config.d load order:                                            ║
+# ║    01-variables.conf   — Colors, fonts, gaps, borders            ║
+# ║    02-visual.conf      — SwayFX blur/shadows/animations          ║
+# ║    03-input.conf       — Keyboard, mouse, touchpad               ║
+# ║    04-output.conf      — Monitor layout, wallpaper               ║
+# ║    05-keybinds.conf    — All keybindings                         ║
+# ║    06-windows.conf     — Window rules, floating, assignments      ║
+# ║    07-workspaces.conf  — Workspace definitions & assignments      ║
+# ║    08-autostart.conf   — Startup apps, J.A.R.V.I.S. boot        ║
+# ║    09-gaming.conf      — Gaming mode, gamescope, gamemode        ║
+# ║    10-bars.conf        — Waybar / status bar config              ║
+# ╚══════════════════════════════════════════════════════════════════╝
+
+# Load all modular configs
+include $HOME/.config/sway/config.d/*.conf
+
+# Load Noctalia shell integration (dock, widgets, quickshell)
+include $HOME/.config/sway/noctalia

@@ -1,0 +1,35 @@
+[Default Applications]
+application/json=org.kde.kate.desktop
+application/x-zerosize=org.kde.kate.desktop
+application/xhtml+xml=firefox.desktop
+inode/directory=org.kde.dolphin.desktop
+text/html=firefox.desktop
+text/markdown=org.kde.kate.desktop
+text/plain=org.kde.kate.desktop
+text/x-c++src=org.kde.kate.desktop
+text/x-csrc=org.kde.kate.desktop
+text/x-python=org.kde.kate.desktop
+text/x-shellscript=org.kde.kate.desktop
+x-scheme-handler/file=org.kde.dolphin.desktop
+x-scheme-handler/http=firefox.desktop
+x-scheme-handler/https=firefox.desktop
+image/png=org.gnome.Loupe.desktop
+
+[Added Associations]
+application/json=org.kde.kate.desktop;
+application/x-zerosize=org.kde.kate.desktop;
+application/xhtml+xml=firefox.desktop;
+inode/directory=org.kde.dolphin.desktop;
+text/html=firefox.desktop;
+text/markdown=org.kde.kate.desktop;
+text/plain=org.kde.kate.desktop;
+text/x-c++src=org.kde.kate.desktop;
+text/x-csrc=org.kde.kate.desktop;
+text/x-python=org.kde.kate.desktop;
+text/x-shellscript=org.kde.kate.desktop;
+x-scheme-handler/file=org.kde.dolphin.desktop;
+x-scheme-handler/http=firefox.desktop;
+x-scheme-handler/https=firefox.desktop;
+image/png=org.gnome.Loupe.desktop;
+
+[Removed Associations]

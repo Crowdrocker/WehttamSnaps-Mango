@@ -1,0 +1,4 @@
+module qs.Modules.MiniPanel.MiniPanelControlCenter
+
+MiniPanelControlCenterPopout 1.0 MiniPanelControlCenterPopout.qml
+PowerMenu 1.0 PowerMenu.qml

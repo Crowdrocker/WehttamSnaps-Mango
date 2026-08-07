@@ -1,0 +1,14 @@
+module qs.Modules.TaskBar.TaskBarAppDrawer
+TaskBarAppDrawerPopout 1.0 TaskBarAppDrawerPopout.qml
+TaskBarAppLauncher 1.0 TaskBarAppLauncher.qml
+TaskBarAppIconBtn 1.0 TaskBarAppIconBtn.qml
+TaskBarAppMenuEntry 1.0 TaskBarAppMenuEntry.qml
+TaskBarAppMenuSep 1.0 TaskBarAppMenuSep.qml
+TaskBarCategorySelector 1.0 TaskBarCategorySelector.qml
+
+# Back-compat type names used in QML
+AppLauncher 1.0 TaskBarAppLauncher.qml
+AppIconBtn 1.0 TaskBarAppIconBtn.qml
+AppMenuEntry 1.0 TaskBarAppMenuEntry.qml
+AppMenuSep 1.0 TaskBarAppMenuSep.qml
+CategorySelector 1.0 TaskBarCategorySelector.qml

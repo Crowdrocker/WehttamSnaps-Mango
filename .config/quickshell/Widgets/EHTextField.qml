@@ -1,0 +1,258 @@
+import QtQuick
+import QtQuick.Controls
+import QtCore
+import qs.Common
+import qs.Widgets
+
+StyledRect {
+    id: root
+
+    FontLoader {
+        id: interFontLoader
+        source: StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/.config/quickshell/assets/fonts/inter/InterVariable.ttf"
+    }
+    
+    readonly property string interFontFamily: interFontLoader.status === FontLoader.Ready ? interFontLoader.name : "Inter"
+    readonly property string effectiveFontFamily: (typeof SettingsData !== "undefined" && SettingsData.fontFamily)
+        ? SettingsData.fontFamily
+        : root.interFontFamily
+
+    activeFocusOnTab: true
+
+    KeyNavigation.tab: keyNavigationTab
+    KeyNavigation.backtab: keyNavigationBacktab
+
+    onActiveFocusChanged: {
+        if (activeFocus) {
+            textInput.forceActiveFocus()
+        }
+    }
+
+    property alias text: textInput.text
+    property string placeholderText: ""
+    property alias font: textInput.font
+    property alias textColor: textInput.color
+    property alias enabled: textInput.enabled
+    property alias echoMode: textInput.echoMode
+    property alias readOnly: textInput.readOnly
+    property alias validator: textInput.validator
+    property alias maximumLength: textInput.maximumLength
+    property string leftIconName: ""
+    property int leftIconSize: Theme.iconSize
+    property color leftIconColor: Theme.surfaceVariantText
+    property color leftIconFocusedColor: Theme.primary
+    property bool showClearButton: false
+    property color backgroundColor: Qt.rgba(Theme.surfaceContainer.r, Theme.surfaceContainer.g, Theme.surfaceContainer.b, 0.9)
+    property color focusedBorderColor: Theme.primary
+    property color normalBorderColor: Theme.outlineStrong
+    property color placeholderColor: Theme.outlineButton
+    property int borderWidth: 1
+    property int focusedBorderWidth: 2
+    property real cornerRadius: Theme.cornerRadius
+    property real scaleFactor: Appearance.combinedScale
+    
+    readonly property real leftPadding: Math.round((Theme.spacingL + (leftIconName ? leftIconSize + Theme.spacingM : 0)) * scaleFactor)
+    readonly property real rightPadding: Math.round((Theme.spacingL + (showClearButton && text.length > 0 ? 24 + Theme.spacingM : 0)) * scaleFactor)
+    property real topPadding: Theme.spacingS
+    property real bottomPadding: Theme.spacingS
+    property bool ignoreLeftRightKeys: false
+    property var keyForwardTargets: []
+    property Item keyNavigationTab: null
+    property Item keyNavigationBacktab: null
+    property bool autoExpandWidth: true
+    property bool autoExpandHeight: true
+    property real minWidth: Math.round(120 * scaleFactor)
+    property real maxWidth: Math.round(600 * scaleFactor)
+    property real minHeight: Math.round(40 * scaleFactor)
+    property real maxHeight: Math.round(200 * scaleFactor)
+
+    signal textEdited
+    signal editingFinished
+    signal accepted
+    signal focusStateChanged(bool hasFocus)
+
+    function getActiveFocus() {
+        return textInput.activeFocus
+    }
+    function setFocus(value) {
+        textInput.focus = value
+    }
+    function forceActiveFocus() {
+        textInput.forceActiveFocus()
+    }
+    function selectAll() {
+        textInput.selectAll()
+    }
+    function clear() {
+        textInput.clear()
+    }
+    function insertText(str) {
+        textInput.insert(textInput.cursorPosition, str)
+    }
+
+
+    TextMetrics {
+        id: textMetrics
+        font.pixelSize: textInput.font.pixelSize
+        font.family: root.effectiveFontFamily
+        font.weight: textInput.font.weight
+        text: textInput.text.length > 0 ? textInput.text : root.placeholderText
+    }
+
+    width: {
+        if (!autoExpandWidth) return 200
+        const minW = minWidth
+        const maxW = Math.min(maxWidth, parent ? parent.width * 0.8 : 600)
+        const textWidth = textMetrics.width
+        const horizontalPadding = leftPadding + rightPadding
+        const contentWidth = textWidth + horizontalPadding
+        return Math.max(minW, Math.min(maxW, contentWidth))
+    }
+    
+    height: {
+        if (!autoExpandHeight) return 48
+        const minH = minHeight
+        const maxH = maxHeight
+        const textHeight = textMetrics.boundingRect.height
+        const verticalPadding = topPadding + bottomPadding
+        const contentHeight = textHeight + verticalPadding
+        return Math.max(minH, Math.min(maxH, contentHeight))
+    }
+    radius: cornerRadius
+    color: backgroundColor
+    border.color: textInput.activeFocus ? focusedBorderColor : Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.1)
+    border.width: textInput.activeFocus ? focusedBorderWidth : borderWidth
+
+    EHIcon {
+        id: leftIcon
+
+        anchors.left: parent.left
+        anchors.leftMargin: Theme.spacingL
+        anchors.verticalCenter: parent.verticalCenter
+        name: leftIconName
+        size: leftIconSize
+        color: textInput.activeFocus ? leftIconFocusedColor : leftIconColor
+        visible: leftIconName !== ""
+    }
+
+    TextInput {
+        id: textInput
+
+        anchors.fill: parent
+        anchors.leftMargin: root.leftPadding
+        anchors.rightMargin: root.rightPadding
+        anchors.topMargin: root.topPadding
+        anchors.bottomMargin: root.bottomPadding
+        font.pixelSize: Theme.fontSizeMedium
+        font.family: root.effectiveFontFamily
+        color: Theme.surfaceText
+        verticalAlignment: TextInput.AlignVCenter
+        selectByMouse: !root.ignoreLeftRightKeys
+        clip: true
+        activeFocusOnTab: true
+        KeyNavigation.tab: root.keyNavigationTab
+        KeyNavigation.backtab: root.keyNavigationBacktab
+        onTextChanged: root.textEdited()
+        onEditingFinished: root.editingFinished()
+        onAccepted: root.accepted()
+        onActiveFocusChanged: root.focusStateChanged(activeFocus)
+        Keys.forwardTo: root.ignoreLeftRightKeys ? root.keyForwardTargets : []
+        Keys.onLeftPressed: event => {
+                                if (root.ignoreLeftRightKeys) {
+                                    event.accepted = true
+                                } else {
+                                    event.accepted = false
+                                }
+                            }
+        Keys.onRightPressed: event => {
+                                 if (root.ignoreLeftRightKeys) {
+                                     event.accepted = true
+                                 } else {
+                                     event.accepted = false
+                                 }
+                             }
+
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true 
+            cursorShape: Qt.IBeamCursor
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            onClicked: mouse => {
+                textInput.forceActiveFocus()
+                if (mouse.button === Qt.LeftButton) {
+                    const pos = textInput.positionAt(mouse.x - root.leftPadding, mouse.y - root.topPadding)
+                    textInput.cursorPosition = pos
+                }
+            }
+            onDoubleClicked: {
+                textInput.selectAll()
+            }
+        }
+    }
+
+    StyledRect {
+        id: clearButton
+
+        width: 24
+        height: 24
+        radius: 12
+        color: clearArea.containsMouse ? Theme.outlineStrong : "transparent"
+        border.color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.12)
+        border.width: 1
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.spacingL
+        anchors.verticalCenter: parent.verticalCenter
+        visible: showClearButton && text.length > 0
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Theme.shortDuration
+                easing.type: Theme.standardEasing
+            }
+        }
+
+        EHIcon {
+            anchors.centerIn: parent
+            name: "close"
+            size: 16
+            color: clearArea.containsMouse ? Theme.outline : Theme.surfaceVariantText
+        }
+
+        MouseArea {
+            id: clearArea
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                textInput.text = ""
+            }
+        }
+    }
+
+    Text {
+        anchors.fill: textInput
+        text: root.placeholderText
+        font.pixelSize: textInput.font.pixelSize
+        font.family: root.effectiveFontFamily
+        font.weight: textInput.font.weight
+        color: placeholderColor
+        verticalAlignment: textInput.verticalAlignment
+        visible: textInput.text.length === 0 && !textInput.activeFocus
+        elide: Text.ElideRight
+    }
+
+    Behavior on border.color {
+        ColorAnimation {
+            duration: Theme.shortDuration
+            easing.type: Theme.standardEasing
+        }
+    }
+
+    Behavior on border.width {
+        NumberAnimation {
+            duration: Theme.shortDuration
+            easing.type: Theme.standardEasing
+        }
+    }
+}

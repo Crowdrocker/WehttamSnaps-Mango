@@ -1,0 +1,31 @@
+{
+  "material-code.colors": {
+    "primary": "#fcb0d6",
+    "foreground": "#eedfe3",
+    "mutedForeground": "#d4c2c8",
+    "background": "#181115",
+    "card": "#251d21",
+    "popover": "#30282b",
+    "hover": "#3b3236",
+    "border": "#504349",
+    "primaryForeground": "#521d3c",
+    "secondary": "#58404b",
+    "secondaryForeground": "#fdd9e8",
+    "error": "#ffb4ab",
+    "errorForeground": "#690005",
+    "success": "#884b6b",
+    "warning": "#f3bb9b",
+    "syntax.comment": "#9c8d92",
+    "syntax.string": "#f3bb9b",
+    "syntax.keyword": "#fcb0d6",
+    "syntax.variable": "#eedfe3",
+    "syntax.attribute": "#dfbdcc",
+    "syntax.property": "#d4c2c8",
+    "syntax.function": "#6c3453",
+    "syntax.constant": "#643d25",
+    "syntax.bracket1": "#fcb0d6",
+    "syntax.bracket2": "#dfbdcc",
+    "syntax.bracket3": "#f3bb9b",
+    "syntax.bracket4": "#884b6b"
+  }
+}

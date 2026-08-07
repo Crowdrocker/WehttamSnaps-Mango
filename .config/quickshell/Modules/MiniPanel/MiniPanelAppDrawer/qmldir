@@ -1,0 +1,7 @@
+module qs.Modules.Dock.DockAppDrawer
+AppDrawerPopout 1.0 AppDrawerPopout.qml
+AppLauncher 1.0 AppLauncher.qml
+AppIconBtn 1.0 AppIconBtn.qml
+AppMenuEntry 1.0 AppMenuEntry.qml
+AppMenuSep 1.0 AppMenuSep.qml
+CategorySelector 1.0 CategorySelector.qml

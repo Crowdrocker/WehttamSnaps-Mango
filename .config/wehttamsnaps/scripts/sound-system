@@ -1,0 +1,679 @@
+#!/bin/bash
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  sound-system — WehttamSnaps Adaptive Sound System                           ║
+# ║  Switches between J.A.R.V.I.S. and iDroid based on context                  ║
+# ║  github.com/Crowdrocker  |  twitch.tv/WehttamSnaps                          ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+set -euo pipefail
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════════
+SILENT_FLAG="$HOME/.cache/wehttamsnaps/silent.active"
+SOUND_BASE="/usr/share/wehttamsnaps/sounds"
+STATE_FILE="$HOME/.cache/wehttamsnaps/sound-mode.state"
+WORKSPACE_FILE="$HOME/.cache/wehttamsnaps/current-workspace.state"
+GAMING_FLAG="$HOME/.cache/wehttamsnaps/gaming-mode.active"
+
+mkdir -p "$(dirname "$STATE_FILE")"
+mkdir -p "$SOUND_BASE"/{jarvis,idroid}
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  WORKSPACE MAP (matches 07-workspaces.conf)
+#  1:BROWSER  2:TERM  3:GAMING  4:STREAM  5:PHOTO
+#  6:MEDIA    7:COMMS 8:MUSIC   9:FILES  10:SYS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+get_current_mode() {
+    [[ -f "$STATE_FILE" ]] && cat "$STATE_FILE" || echo "jarvis"
+}
+
+set_mode() {
+    local mode="$1"
+    echo "$mode" > "$STATE_FILE"
+    echo -e "${CYAN}🔊 Sound mode:${NC} ${GREEN}$mode${NC}"
+}
+
+get_current_workspace() {
+    # SwayFX / sway workspace detection
+    if command -v swaymsg &>/dev/null; then
+        swaymsg -t get_workspaces 2>/dev/null | \
+            python3 -c "import sys,json; ws=[w for w in json.load(sys.stdin) if w.get('focused')]; print(ws[0]['name'].split(':')[0] if ws else '1')" \
+            2>/dev/null || echo "1"
+    elif [[ -f "$WORKSPACE_FILE" ]]; then
+        cat "$WORKSPACE_FILE"
+    else
+        echo "1"
+    fi
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  AUTO-DETECT MODE
+#  WS3:GAMING, WS4:STREAM → iDroid
+#  WS5:PHOTO, WS2:TERM    → J.A.R.V.I.S.
+#  gaming-mode.active flag → iDroid always
+# ═══════════════════════════════════════════════════════════════════════════════
+
+auto_detect_mode() {
+    local workspace
+    workspace=$(get_current_workspace)
+    # Strip name suffix e.g. "3:GAMING" → "3"
+    workspace="${workspace%%:*}"
+
+    # Gaming flag overrides everything
+    [[ -f "$GAMING_FLAG" ]] && echo "idroid" && return
+
+    case "$workspace" in
+        3|4) echo "idroid"  ;;   # GAMING, STREAM
+        *)   echo "jarvis"  ;;   # everything else
+    esac
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  PLAY SOUND
+# ═══════════════════════════════════════════════════════════════════════════════
+
+play_sound() {
+    local name="$1"
+    [[ -f "$SILENT_FLAG" ]] && return 0
+    local sound_name="$1"
+    local force_mode="${2:-}"
+    local mode
+
+    if [[ -n "$force_mode" ]]; then
+        mode="$force_mode"
+    else
+        mode=$(auto_detect_mode)
+    fi
+
+    local sound_path="$SOUND_BASE/$mode/$sound_name.mp3"
+
+    # Fallback to other mode if clip doesn't exist
+    if [[ ! -f "$sound_path" ]]; then
+        local alt_mode
+        [[ "$mode" == "jarvis" ]] && alt_mode="idroid" || alt_mode="jarvis"
+        sound_path="$SOUND_BASE/$alt_mode/$sound_name.mp3"
+    fi
+
+    if [[ -f "$sound_path" ]]; then
+        paplay "$sound_path" &>/dev/null &
+    else
+        echo -e "${YELLOW}⚠${NC}  Sound not found: $sound_name.mp3 (tried $mode + fallback)"
+    fi
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  AUDIO CONTROLS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+audio_mute_toggle() {
+    wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+    if wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -q "MUTED"; then
+        play_sound "audio-mute"
+    else
+        play_sound "audio-unmute"
+    fi
+}
+
+audio_volume_up() {
+    wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 5%+
+    play_sound "volume-up"
+}
+
+audio_volume_down() {
+    wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+    play_sound "volume-down"
+}
+
+mic_mute_toggle() {
+    wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+    if wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | grep -q "MUTED"; then
+        play_sound "mic-mute"
+    else
+        play_sound "mic-unmute"
+    fi
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  GAMING MODE  (called by toggle-gamemode.sh)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+gamemode_on() {
+    touch "$GAMING_FLAG"
+    set_mode "idroid"
+    play_sound "gamemode-on" "idroid"
+    notify-send "iDroid" "Combat systems online. Gaming mode activated." \
+        -i applications-games -t 3000
+}
+
+gamemode_off() {
+    rm -f "$GAMING_FLAG"
+    set_mode "jarvis"
+    play_sound "gamemode-off" "jarvis"
+    notify-send "J.A.R.V.I.S." "Normal operation restored. Welcome back, Matthew." \
+        -i audio-speakers -t 3000
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  APPLICATION LAUNCHERS
+# ─────────────────────────────────────────────────────────────────────────────
+
+launch_brave()       { play_sound "launch-brave"; }
+launch_firefox()     { play_sound "launch-firefox"; }
+launch_chrome()      { play_sound "launch-chrome"; }
+launch_discord()     { play_sound "launch-discord"; }
+launch_editor()      { play_sound "launch-editor"; }
+launch_gimp()        { play_sound "launch-gimp"; }
+launch_kate()        { play_sound "launch-kate"; }
+launch_obs()         { play_sound "launch-obs"; }
+launch_spotify()     { play_sound "launch-spotify"; }
+open_terminal()      { play_sound "open-terminal"; }
+open_files()         { play_sound "open-files"; }
+steam_launch()       { set_mode "idroid"; play_sound "steam-launch" "idroid"; }
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  SYSTEM EVENTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+system_startup()     { set_mode "jarvis"; play_sound "startup" "jarvis"; }
+system_shutdown()    { play_sound "shutdown" "jarvis"; }
+notification()       { play_sound "notification"; }
+discord_notify()     { play_sound "discord-notify" "idroid"; }
+screenshot_taken()   { play_sound "screenshot"; }
+window_close()       { play_sound "window-close"; }
+window_center()      { play_sound "window-center"; }
+window_tile()        { play_sound "window-tile"; }
+window_float()       { play_sound "window-float"; }
+window_fullscreen()  { play_sound "window-fullscreen"; }
+config_reload()      { play_sound "reload"; }
+locking_screen()     { play_sound "lock"; }
+photo_export()       { play_sound "photo-export" "jarvis"; }
+photo_mode()         { play_sound "photo-mode" "jarvis"; }
+streaming_on()       { play_sound "streaming" "idroid"; }
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  GREETINGS (Time-based)
+# ─────────────────────────────────────────────────────────────────────────────
+
+greeting()           { play_sound "greeting"; }
+morning_greeting()   { play_sound "morning"; }
+afternoon_greeting() { play_sound "afternoon"; }
+evening_greeting()   { play_sound "evening"; }
+
+# Time-aware greeting
+greeting_auto() {
+    local hour
+    hour=$(date +%H)
+    if (( hour >= 5 && hour < 12 )); then
+        morning_greeting
+    elif (( hour >= 12 && hour < 17 )); then
+        afternoon_greeting
+    else
+        evening_greeting
+    fi
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  ALERTS & WARNINGS
+# ─────────────────────────────────────────────────────────────────────────────
+
+alert_high()         { play_sound "alert-high"; }
+alert_medium()       { play_sound "alert-medium"; }
+warning()            { play_sound "warning"; }
+error()              { play_sound "error"; }
+performance_warn()   { play_sound "performance-warn" "idroid"; }
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  SYSTEM STATUS ALERTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+battery_critical()   { play_sound "battery-critical"; }
+low_memory()         { play_sound "low-memory"; }
+disk_space()         { play_sound "disk-space"; }
+plugged_in()         { play_sound "plugged-in"; }
+unplugged()          { play_sound "unplugged"; }
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  DEVELOPMENT
+# ─────────────────────────────────────────────────────────────────────────────
+
+compile_success()    { play_sound "compile-success"; }
+compile_error()      { play_sound "compile-error"; }
+git_pull()           { play_sound "git-pull"; }
+git_push()           { play_sound "git-push"; }
+deploy()             { play_sound "deploy"; }
+update()             { play_sound "update"; }
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  COMPLETIONS
+# ─────────────────────────────────────────────────────────────────────────────
+
+backup_complete()    { play_sound "backup-complete"; }
+download_complete()  { play_sound "download-complete"; }
+upload_complete()    { play_sound "upload-complete"; }
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  PRODUCTIVITY
+# ─────────────────────────────────────────────────────────────────────────────
+
+meeting_reminder()   { play_sound "meeting-reminder"; }
+break_reminder()     { play_sound "break-reminder"; }
+focus_mode()         { play_sound "focus-mode"; }
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  NETWORK
+# ─────────────────────────────────────────────────────────────────────────────
+
+vpn_connected()      { play_sound "vpn-connected"; }
+vpn_disconnected()   { play_sound "vpn-disconnected"; }
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  MEDIA CONTROLS
+# ─────────────────────────────────────────────────────────────────────────────
+
+music_play()         { play_sound "music-play"; }
+music_pause()        { play_sound "music-pause"; }
+music_next()         { play_sound "music-next"; }
+music_previous()     { play_sound "music-previous"; }
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  VOICE ASSISTANT
+# ─────────────────────────────────────────────────────────────────────────────
+
+listening()          { play_sound "listening"; }
+confirm()            { play_sound "confirm"; }
+app_not_found()      { play_sound "app-not-found"; }
+command_unknown()    { play_sound "command-unknown"; }
+you_welcome()        { play_sound "you-welcome"; }
+status_report()      { play_sound "status-report"; }
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  SEARCH
+# ─────────────────────────────────────────────────────────────────────────────
+
+search_google()      { play_sound "search-google"; }
+search_github()      { play_sound "search-github"; }
+search_youtube()     { play_sound "search-youtube"; }
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  WORKSPACE
+# ─────────────────────────────────────────────────────────────────────────────
+
+workspace_switch() {
+    local workspace="$1"
+    echo "$workspace" > "$WORKSPACE_FILE"
+    local new_mode
+    new_mode=$(auto_detect_mode)
+    set_mode "$new_mode"
+    play_sound "workspace-switch"
+}
+
+workspace_next()     { play_sound "workspace-next"; }
+workspace_previous() { play_sound "workspace-previous"; }
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  TESTING & DIAGNOSTICS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+test_all_sounds() {
+    echo -e "${CYAN}🔊 Testing all sounds...${NC}\n"
+    for mode in jarvis idroid; do
+        echo -e "${BLUE}━━━ $mode ━━━${NC}"
+        if [[ -d "$SOUND_BASE/$mode" ]]; then
+            local count=0
+            for sound in "$SOUND_BASE/$mode"/*.mp3; do
+                [[ -f "$sound" ]] || continue
+                local name; name=$(basename "$sound" .mp3)
+                echo -e "  ${GREEN}▶${NC} $name"
+                paplay "$sound"
+                sleep 0.8
+                ((count++))
+            done
+            [[ $count -eq 0 ]] && echo -e "  ${YELLOW}⚠${NC}  No sounds found"
+        else
+            echo -e "  ${RED}✗${NC} Directory not found"
+        fi
+        echo ""
+    done
+}
+
+list_sounds() {
+    echo -e "${CYAN}📁 Available sounds:${NC}\n"
+    for mode in jarvis idroid; do
+        echo -e "${BLUE}━━━ $mode ━━━${NC}"
+        if [[ -d "$SOUND_BASE/$mode" ]]; then
+            local count=0
+            for sound in "$SOUND_BASE/$mode"/*.mp3; do
+                [[ -f "$sound" ]] || continue
+                echo -e "  ${GREEN}•${NC} $(basename "$sound" .mp3)"
+                ((count++))
+            done
+            [[ $count -eq 0 ]] && echo -e "  ${YELLOW}⚠${NC}  No sounds found (see sounds/README.md)"
+        else
+            echo -e "  ${RED}✗${NC} $SOUND_BASE/$mode not found"
+        fi
+        echo ""
+    done
+}
+
+show_status() {
+    local current_mode; current_mode=$(get_current_mode)
+    local auto_mode;    auto_mode=$(auto_detect_mode)
+    local workspace;    workspace=$(get_current_workspace)
+    local gaming_active="No"
+    [[ -f "$GAMING_FLAG" ]] && gaming_active="${GREEN}Yes (iDroid active)${NC}"
+
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${CYAN}  J.A.R.V.I.S. Sound System  ${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${YELLOW}Saved Mode:${NC}     $current_mode"
+    echo -e "${YELLOW}Auto-Detect:${NC}    $auto_mode"
+    echo -e "${YELLOW}Workspace:${NC}      $workspace"
+    echo -e "${YELLOW}Gaming Mode:${NC}    $(echo -e $gaming_active)"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+}
+
+show_help() {
+    cat << EOF
+${CYAN}WehttamSnaps Adaptive Sound System${NC}
+
+${YELLOW}Usage:${NC}
+  sound-system <command> [args]
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} AUDIO CONTROLS${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  mute              Toggle audio mute
+  volume-up         Increase volume 5%
+  volume-down       Decrease volume 5%
+  mic-mute          Toggle microphone
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} APPLICATION LAUNCHERS${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  launch-brave      Launch Brave browser
+  launch-firefox    Launch Firefox browser
+  launch-chrome     Launch Chrome browser
+  launch-discord    Launch Discord
+  launch-editor     Launch text editor
+  launch-gimp       Launch GIMP
+  launch-kate       Launch Kate editor
+  launch-obs        Launch OBS Studio
+  launch-spotify    Launch Spotify
+  open-terminal     Open terminal
+  open-files        Open file manager
+  steam-launch      Launch Steam (switches to iDroid)
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} SYSTEM EVENTS${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  startup           Boot greeting
+  shutdown          Goodbye
+  notification      Alert sound
+  discord-notify    Discord notification (iDroid)
+  screenshot        Capture sound
+  window-close      Window close sound
+  window-center     Center window
+  window-tile       Tile window
+  window-float      Float window
+  window-fullscreen Fullscreen window
+  config-reload     Config reloaded
+  locking-screen    Lock screen
+  photo-export      Export complete
+  photo-mode        Photo mode
+  streaming         Streaming mode on
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} GREETINGS${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  greeting          Generic greeting
+  morning           Morning greeting
+  afternoon         Afternoon greeting
+  evening           Evening greeting
+  greeting-auto     Time-aware greeting
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} ALERTS & WARNINGS${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  alert-high        High priority alert
+  alert-medium      Medium priority alert
+  warning           Warning sound
+  error             Error sound
+  performance-warn  Performance warning (iDroid)
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} SYSTEM STATUS${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  battery-critical  Low battery warning
+  low-memory        Memory warning
+  disk-space        Disk space warning
+  plugged-in        Power connected
+  unplugged         Power disconnected
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} DEVELOPMENT${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  compile-success   Build succeeded
+  compile-error     Build failed
+  git-pull          Git pull complete
+  git-push          Git push complete
+  deploy            Deployment
+  update            System update
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} COMPLETIONS${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  backup-complete   Backup finished
+  download-complete Download finished
+  upload-complete   Upload finished
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} PRODUCTIVITY${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  meeting-reminder  Meeting reminder
+  break-reminder    Break reminder
+  focus-mode        Focus mode activated
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} NETWORK${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  vpn-connected     VPN connected
+  vpn-disconnected  VPN disconnected
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} MEDIA CONTROLS${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  music-play        Play music
+  music-pause       Pause music
+  music-next        Next track
+  music-previous    Previous track
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} VOICE ASSISTANT${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  listening         Voice assistant listening
+  confirm           Confirmation sound
+  app-not-found     Application not found
+  command-unknown   Unknown command
+  you-welcome       You're welcome
+  status-report     Status report
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} SEARCH${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  search-google     Search Google
+  search-github     Search GitHub
+  search-youtube    Search YouTube
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} GAMING MODE${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  gamemode-on       Activate iDroid voice
+  gamemode-off      Return to J.A.R.V.I.S.
+  gaming-toggle     Toggle gaming mode
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} WORKSPACE${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  workspace <num>   Notify + auto-switch voice mode
+  workspace-next    Next workspace
+  workspace-previous Previous workspace
+
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+${YELLOW} UTILITIES${NC}
+${YELLOW}═════════════════════════════════════════════════════════════${NC}
+  status            Show current mode & context
+  list              List all available sounds
+  test              Play all sounds sequentially
+  play <name> [mode]  Play specific clip
+  mode <jarvis|idroid>  Force mode override
+  help              This help
+
+${YELLOW}Workspace → Mode mapping:${NC}
+  1:BROWSER  → J.A.R.V.I.S.   5:PHOTO    → J.A.R.V.I.S.
+  2:TERM     → J.A.R.V.I.S.   6:MEDIA    → J.A.R.V.I.S.
+  3:GAMING   → iDroid          7:COMMS    → J.A.R.V.I.S.
+  4:STREAM   → iDroid          8:MUSIC    → J.A.R.V.I.S.
+  gaming-mode.active flag overrides all → iDroid
+EOF
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  MAIN DISPATCHER
+# ═══════════════════════════════════════════════════════════════════════════════
+
+case "${1:-help}" in
+    # Audio Controls
+    mute)           audio_mute_toggle ;;
+    volume-up)      audio_volume_up ;;
+    volume-down)    audio_volume_down ;;
+    mic-mute)       mic_mute_toggle ;;
+
+    # Application Launchers
+    launch-brave)   launch_brave ;;
+    launch-firefox) launch_firefox ;;
+    launch-chrome)  launch_chrome ;;
+    launch-discord) launch_discord ;;
+    launch-editor)  launch_editor ;;
+    launch-gimp)    launch_gimp ;;
+    launch-kate)    launch_kate ;;
+    launch-obs)     launch_obs ;;
+    launch-spotify) launch_spotify ;;
+    open-terminal)  open_terminal ;;
+    open-files)     open_files ;;
+    steam-launch)   steam_launch ;;
+
+    # System Events
+    startup)        system_startup ;;
+    shutdown)       system_shutdown ;;
+    notification)   notification ;;
+    discord-notify) discord_notify ;;
+    screenshot)     screenshot_taken ;;
+    window-close)   window_close ;;
+    window-center)  window_center ;;
+    window-tile)    window_tile ;;
+    window-float)   window_float ;;
+    window-fullscreen) window_fullscreen ;;
+    config-reload)  config_reload ;;
+    locking-screen) locking_screen ;;
+    photo-export)   photo_export ;;
+    photo-mode)     photo_mode ;;
+    streaming)      streaming_on ;;
+
+    # Greetings
+    greeting)       greeting ;;
+    morning)        morning_greeting ;;
+    afternoon)      afternoon_greeting ;;
+    evening)        evening_greeting ;;
+    greeting-auto)  greeting_auto ;;
+
+    # Alerts & Warnings
+    alert-high)     alert_high ;;
+    alert-medium)   alert_medium ;;
+    warning)        warning ;;
+    error)          error ;;
+    performance-warn) performance_warn ;;
+
+    # System Status
+    battery-critical) battery_critical ;;
+    low-memory)     low_memory ;;
+    disk-space)     disk_space ;;
+    plugged-in)     plugged_in ;;
+    unplugged)      unplugged ;;
+
+    # Development
+    compile-success) compile_success ;;
+    compile-error)  compile_error ;;
+    git-pull)       git_pull ;;
+    git-push)       git_push ;;
+    deploy)         deploy ;;
+    update)         update ;;
+
+    # Completions
+    backup-complete) backup_complete ;;
+    download-complete) download_complete ;;
+    upload-complete) upload_complete ;;
+
+    # Productivity
+    meeting-reminder) meeting_reminder ;;
+    break-reminder) break_reminder ;;
+    focus-mode)     focus_mode ;;
+
+    # Network
+    vpn-connected)  vpn_connected ;;
+    vpn-disconnected) vpn_disconnected ;;
+
+    # Media Controls
+    music-play)     music_play ;;
+    music-pause)    music_pause ;;
+    music-next)     music_next ;;
+    music-previous) music_previous ;;
+
+    # Voice Assistant
+    listening)      listening ;;
+    confirm)        confirm ;;
+    app-not-found)  app_not_found ;;
+    command-unknown) command_unknown ;;
+    you-welcome)    you_welcome ;;
+    status-report)  status_report ;;
+
+    # Search
+    search-google)  search_google ;;
+    search-github)  search_github ;;
+    search-youtube) search_youtube ;;
+
+    # Gaming Mode
+    gamemode-on)    gamemode_on ;;
+    gamemode-off)   gamemode_off ;;
+    gaming-toggle)
+        [[ -f "$GAMING_FLAG" ]] && gamemode_off || gamemode_on
+        ;;
+
+    # Workspace
+    workspace)      workspace_switch "${2:-1}" ;;
+    workspace-next) workspace_next ;;
+    workspace-previous) workspace_previous ;;
+    mode)           set_mode "${2:-jarvis}" ;;
+    auto-mode)      set_mode "$(auto_detect_mode)" ;;
+
+    # Utilities
+    play)           play_sound "${2:-startup}" "${3:-}" ;;
+    status)         show_status ;;
+    list)           list_sounds ;;
+    test)           test_all_sounds ;;
+
+    help|--help|-h) show_help ;;
+    *)
+        echo -e "${RED}✗${NC} Unknown command: $1"
+        echo "Run 'sound-system help' for usage"
+        exit 1
+        ;;
+esac

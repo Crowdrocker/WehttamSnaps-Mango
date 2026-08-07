@@ -1,0 +1,14 @@
+module qs.Modules.Dock
+Dock 1.0 Dock.qml
+DockAppButton 1.0 DockAppButton.qml
+DockApps 1.0 DockApps.qml
+DockApplications 1.0 DockApplications.qml
+DockContextMenu 1.0 DockContextMenu.qml
+DockMenuRow 1.0 DockMenuRow.qml
+DockMenuSeparator 1.0 DockMenuSeparator.qml
+DockMinimizedPreview 1.0 DockMinimizedPreview.qml
+DockTaskBarContextMenu 1.0 DockTaskBarContextMenu.qml
+DockTrashContextMenu 1.0 DockTrashContextMenu.qml
+DockWidgets 1.0 DockWidgets.qml
+DockWindowPreview 1.0 DockWindowPreview.qml
+DockCalendarPopout 1.0 DockCalendarPopout.qml

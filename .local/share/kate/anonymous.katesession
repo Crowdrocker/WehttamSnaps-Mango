@@ -1,0 +1,153 @@
+[Kate Plugins]
+bookmarksplugin=false
+cmaketoolsplugin=false
+compilerexplorer=false
+eslintplugin=false
+externaltoolsplugin=true
+formatplugin=false
+katebacktracebrowserplugin=false
+katebuildplugin=false
+katecloseexceptplugin=false
+katecolorpickerplugin=false
+katectagsplugin=false
+katefilebrowserplugin=false
+katefiletreeplugin=true
+kategdbplugin=false
+kategitblameplugin=false
+kategpgplugin=false
+katekonsoleplugin=true
+kateprojectplugin=true
+katereplicodeplugin=false
+katesearchplugin=true
+katesnippetsplugin=false
+katesqlplugin=false
+katesymbolviewerplugin=false
+katexmlcheckplugin=false
+katexmltoolsplugin=false
+keyboardmacrosplugin=false
+ktexteditorpreviewplugin=false
+latexcompletionplugin=false
+lspclientplugin=true
+openlinkplugin=false
+rainbowparens=false
+rbqlplugin=false
+tabswitcherplugin=true
+templateplugin=false
+textfilterplugin=true
+
+[MainWindow0]
+Active ViewSpace=0
+Kate-MDI-H-Splitter=0,1847,0
+Kate-MDI-Sidebar-0-Bar-0-TvList=kate_private_plugin_katefiletreeplugin,kateproject,kateprojectgit,lspclient_symbol_outline
+Kate-MDI-Sidebar-0-LastSize=185
+Kate-MDI-Sidebar-0-SectSizes=0
+Kate-MDI-Sidebar-0-Splitter=911
+Kate-MDI-Sidebar-1-Bar-0-TvList=
+Kate-MDI-Sidebar-1-LastSize=200
+Kate-MDI-Sidebar-1-SectSizes=0
+Kate-MDI-Sidebar-1-Splitter=911
+Kate-MDI-Sidebar-2-Bar-0-TvList=
+Kate-MDI-Sidebar-2-LastSize=200
+Kate-MDI-Sidebar-2-SectSizes=0
+Kate-MDI-Sidebar-2-Splitter=1847
+Kate-MDI-Sidebar-3-Bar-0-TvList=output,diagnostics,kate_plugin_katesearch,kateprojectinfo,kate_private_plugin_katekonsoleplugin
+Kate-MDI-Sidebar-3-LastSize=203
+Kate-MDI-Sidebar-3-SectSizes=0
+Kate-MDI-Sidebar-3-Splitter=1892
+Kate-MDI-Sidebar-Style=2
+Kate-MDI-Sidebar-Visible=true
+Kate-MDI-ToolView-diagnostics-Position=3
+Kate-MDI-ToolView-diagnostics-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-diagnostics-Visible=false
+Kate-MDI-ToolView-kate_plugin_katesearch-Position=3
+Kate-MDI-ToolView-kate_plugin_katesearch-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-kate_plugin_katesearch-Visible=true
+Kate-MDI-ToolView-kate_private_plugin_katefiletreeplugin-Position=0
+Kate-MDI-ToolView-kate_private_plugin_katefiletreeplugin-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-kate_private_plugin_katefiletreeplugin-Visible=false
+Kate-MDI-ToolView-kate_private_plugin_katekonsoleplugin-Position=3
+Kate-MDI-ToolView-kate_private_plugin_katekonsoleplugin-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-kate_private_plugin_katekonsoleplugin-Visible=false
+Kate-MDI-ToolView-kateproject-Position=0
+Kate-MDI-ToolView-kateproject-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-kateproject-Visible=false
+Kate-MDI-ToolView-kateprojectgit-Position=0
+Kate-MDI-ToolView-kateprojectgit-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-kateprojectgit-Visible=false
+Kate-MDI-ToolView-kateprojectinfo-Position=3
+Kate-MDI-ToolView-kateprojectinfo-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-kateprojectinfo-Visible=false
+Kate-MDI-ToolView-lspclient_symbol_outline-Position=0
+Kate-MDI-ToolView-lspclient_symbol_outline-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-lspclient_symbol_outline-Visible=false
+Kate-MDI-ToolView-output-Position=3
+Kate-MDI-ToolView-output-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-output-Visible=false
+Kate-MDI-V-Splitter=0,707,203
+
+[MainWindow0 Settings]
+WindowState=8
+
+[MainWindow0-Splitter 0]
+Children=MainWindow0-ViewSpace 0
+Orientation=1
+Sizes=1847
+
+[MainWindow0-ViewSpace 0]
+Count=0
+Documents=
+
+[Open Documents]
+Count=0
+
+[Open MainWindows]
+Count=1
+
+[Plugin:kateprojectplugin:]
+projects=
+
+[Plugin:katesearchplugin:MainWindow:0]
+BinaryFiles=false
+CurrentExcludeFilter=0
+CurrentFilter=0
+ExcludeFilters=\\0
+ExpandSearchResults=false
+Filters=\\0
+FollowSymLink=false
+HiddenFiles=false
+MatchCase=false
+Place=0
+Recursive=true
+Replaces=\s- ,My,-,+,/,paru --needed --noconfirm -S\s
+Search=fDefaultAutoVanityZoom,fVertibirdVanityModeMaxDist,fSafeZoneY,fDefaultWorldFOV,fDialogueCameraMouseMoveExit,fLThumbDeadzone,f3rdPersonCameraBoneHeightMult,fGamepadHeadingSensitivityDefault,fDefault1stPersonFOV,bApplyCameraNodeAnimations,fMouseWheelZoomSpeed,f3rdPersonAimFOV,bPipboyDisableFX,uPipboyTargetHeight,bUseCombinedObjects,bPreCulledObjectsEnabled,bUsePreCulledObjects,870,1920,iPresentInterval,grass,uPipboyTarget,Color,sLocalSavePath
+SearchAsYouTypeAllProjects=true
+SearchAsYouTypeCurrentFile=true
+SearchAsYouTypeFolder=true
+SearchAsYouTypeOpenFiles=true
+SearchAsYouTypeProject=true
+SearchDiskFiles=
+SearchDiskFiless=\\0
+SizeLimit=128
+UseRegExp=false
+
+[Recent Files]
+File1[$e]=/mnt/LINUXDRIVE/FO4/FO76-The-Reckoning/profiles/fallout4custom.ini
+File10[$e]=/mnt/LINUXDRIVE/FO4/FO76-The-Reckoning/profiles/The Reckoning Desperados(CBBE)/fallout4prefs.ini
+File2[$e]=/mnt/EXTRA1TB/Life Is Strange Camera angle (3rd Person Camera)-7583-1-01/Readme.txt
+File3[$e]=/mnt/Wettam-Snaps-Main/FO4-DOWNLOADS/FO76-The-Reckoning/Fo4 3rd Person Animations - Sneak Idle and Firing-76198-1-1700518162.zip.meta
+File4[$e]=/mnt/EXTRA1TB/True 3rd Person Shooter Camera Zoom-Out README.txt
+File5[$e]=/mnt/EXTRA1TB/Life Is Strange Camera angle (3rd Person Camera)-7583-1-01/Life Is Strange 3rd person.txt
+File6[$e]=/mnt/LINUXDRIVE/FO4/MO2EasySeparatorMaker_v1.0/mo2SeparatorList-fallout.txt
+File7[$e]=/mnt/LINUXDRIVE/FO4/MO2EasySeparatorMaker_v1.0/mo2SeparatorList.txt
+File8[$e]=/mnt/LINUXDRIVE/FO4/FO76-The-Reckoning/profiles/The Reckoning Desperados(CBBE)/fallout4.ini
+File9[$e]=/mnt/LINUXDRIVE/FO4/FO76-The-Reckoning/profiles/The Reckoning Desperados(CBBE)/fallout4custom.ini
+Name1[$e]=fallout4custom.ini
+Name10[$e]=fallout4prefs.ini
+Name2[$e]=Readme.txt
+Name3[$e]=Fo4 3rd Person Animations - Sneak Idle and Firing-76198-1-1700518162.zip.meta
+Name4[$e]=True 3rd Person Shooter Camera Zoom-Out README.txt
+Name5[$e]=Life Is Strange 3rd person.txt
+Name6[$e]=mo2SeparatorList-fallout.txt
+Name7[$e]=mo2SeparatorList.txt
+Name8[$e]=fallout4.ini
+Name9[$e]=fallout4custom.ini

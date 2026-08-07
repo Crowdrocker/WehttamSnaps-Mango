@@ -1,0 +1,3 @@
+[templates.vesktop]
+input_path = '~/.config/quickshell/matugen/templates/vesktop.css'
+output_path = '~/.config/vesktop/themes/midnight.theme.css'

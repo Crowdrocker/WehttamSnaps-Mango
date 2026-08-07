@@ -1,0 +1,82 @@
+{
+  "change_serial": 6,
+  "entries": [
+    {
+      "active": false,
+      "close_reason": "expired",
+      "event_serial": 3,
+      "notification": {
+        "actions": [
+          "browse:/dev/sdd1",
+          "Browse directory"
+        ],
+        "app_name": "udiskie",
+        "body": "/dev/sdd1: GAMEDRIVE mounted on /run/media/wehttamsnaps/GAMEDRIVE",
+        "category": null,
+        "desktop_entry": null,
+        "expiry_wall_ms": 1786074414344,
+        "icon": "drive-removable-media",
+        "id": 1,
+        "image_data": null,
+        "origin": "external",
+        "received_wall_ms": 1786074408344,
+        "summary": "Device mounted",
+        "timeout": 6000,
+        "urgency": "normal"
+      },
+      "seen": false
+    },
+    {
+      "active": false,
+      "close_reason": "expired",
+      "event_serial": 4,
+      "notification": {
+        "actions": [
+          "browse:/dev/sdi1",
+          "Browse directory"
+        ],
+        "app_name": "udiskie",
+        "body": "/dev/sdi1: EXTRA1TB mounted on /run/media/wehttamsnaps/EXTRA1TB",
+        "category": null,
+        "desktop_entry": null,
+        "expiry_wall_ms": 1786074415391,
+        "icon": "drive-removable-media",
+        "id": 2,
+        "image_data": null,
+        "origin": "external",
+        "received_wall_ms": 1786074409391,
+        "summary": "Device mounted",
+        "timeout": 6000,
+        "urgency": "normal"
+      },
+      "seen": false
+    },
+    {
+      "active": false,
+      "close_reason": "expired",
+      "event_serial": 6,
+      "notification": {
+        "actions": [
+          "default",
+          "Open Shelly"
+        ],
+        "app_name": "Shelly",
+        "body": "No updates available",
+        "category": null,
+        "desktop_entry": "com.shellyorg.shelly",
+        "expiry_wall_ms": 1786075821148,
+        "icon": "shelly",
+        "id": 3,
+        "image_data": null,
+        "origin": "external",
+        "received_wall_ms": 1786075816148,
+        "summary": "Shelly Notifications",
+        "timeout": 5000,
+        "urgency": "normal"
+      },
+      "seen": false
+    }
+  ],
+  "next_id": 4,
+  "version": 2
+}

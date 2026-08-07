@@ -1,0 +1,6 @@
+module qs.Modules.Calendar
+
+CalendarModal 1.0 CalendarModal.qml
+EventModal     1.0 EventModal.qml
+CalendarContextMenu 1.0 CalendarContextMenu.qml
+TimeDropdown 1.0 TimeDropdown.qml

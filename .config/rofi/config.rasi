@@ -1,0 +1,40 @@
+/**
+ * ~/.config/rofi/config.rasi
+ * WehttamSnaps — Global Rofi Configuration
+ * Sets wehttamsnaps.rasi as the default for all rofi calls
+ */
+
+configuration {
+    /* Default mode when launched without -show flag */
+    modi:                   "drun,run,window";
+    show-icons:             true;
+    icon-theme:             "Papirus-Dark";
+    display-drun:           "  Apps";
+    display-run:            "  Run";
+    display-window:         "  Windows";
+
+    /* Matching */
+    matching:               "fuzzy";
+    tokenize:               true;
+    sort:                   true;
+    sorting-method:         "fzf";
+
+    /* Behavior */
+    cycle:                  true;
+    sidebar-mode:           false;
+    hover-select:           false;
+    me-select-entry:        "";
+    me-accept-entry:        "MousePrimary";
+
+    /* Case insensitive search */
+    case-sensitive:         false;
+
+    /* Terminal for -run mode */
+    terminal:               "ghostty";
+
+    /* Wayland backend */
+    /* GDK_BACKEND=wayland is set per-script call */
+}
+
+/* Load WehttamSnaps theme as default */
+@theme "~/.config/rofi/themes/wehttamsnaps.rasi"

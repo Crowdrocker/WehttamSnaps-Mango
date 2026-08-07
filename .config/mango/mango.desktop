@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Mango
+DesktopNames=mango;wlroots
+Comment=mango WM (user config only)
+# Installs over the system session when copied to ~/.local/share/wayland-sessions/
+# so mango always uses ~/.config/mango/config.conf and never falls back to /etc/mango.
+Exec=sh -c 'exec mango -c "${XDG_CONFIG_HOME:-$HOME/.config}/mango/config.conf"'
+Icon=mango
+Type=Application

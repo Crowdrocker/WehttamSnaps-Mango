@@ -1,0 +1,105 @@
+[General]
+Days Meta Infos=30
+Last Session=Linux
+PinnedDocuments=
+Save Meta Infos=true
+Session Manager Sort Column=0
+Session Manager Sort Order=0
+Show Full Path in Title=false
+Show Menu Bar=true
+Show Status Bar=true
+Show Tab Bar=true
+Show Url Nav Bar=true
+
+[KTextEditor Renderer]
+Animate Bracket Matching=false
+Auto Color Theme Selection=true
+Color Theme=Breeze Dark
+Line Height Multiplier=1
+Show Indentation Lines=false
+Show Whole Bracket Expression=false
+Text Font=monospace,11,-1,5,400,0,0,0,1,0,0,0,0,0,0,1,,0,0
+Text Font Features=
+Word Wrap Marker=false
+
+[Kate Print Settings][Margins]
+bottom=5
+left=6.4
+right=6.3
+top=5
+
+[MainWindow]
+1920x1080 screen: Height=1018
+1920x1080 screen: Width=1892
+2 screens: Height=993
+2 screens: Width=1045
+
+[Printing][HeaderFooter]
+FooterBackground=211,211,211
+FooterBackgroundEnabled=false
+FooterEnabled=true
+FooterForeground=0,0,0
+FooterFormatCenter=
+FooterFormatLeft=
+FooterFormatRight=%U
+HeaderBackground=211,211,211
+HeaderBackgroundEnabled=false
+HeaderEnabled=true
+HeaderFooterFont=monospace,11,-1,5,400,0,0,0,1,0,0,0,0,0,0,1,,0,0
+HeaderForeground=0,0,0
+HeaderFormatCenter=%f
+HeaderFormatLeft=%y
+HeaderFormatRight=%p
+
+[Printing][Layout]
+BackgroundColorEnabled=false
+BoxColor=invalid
+BoxEnabled=false
+BoxMargin=6
+BoxWidth=1
+ColorScheme=Printing
+Font=monospace,11,-1,5,400,0,0,0,1,0,0,0,0,0,0,1,,0,0
+
+[Printing][Text]
+DontPrintFoldedCode=true
+Legend=false
+LineNumbers=false
+
+[UiSettings]
+ColorScheme=BreezeDark
+
+[filetree]
+editShade=183,220,246
+listMode=false
+middleClickToClose=false
+shadingEnabled=true
+showCloseButton=false
+showFullPathOnRoots=false
+showToolbar=true
+sortRole=0
+viewShade=211,190,222
+
+[lspclient]
+AllowedServerCommandLines=/home/wehttamsnaps/.cargo/bin/rust-analyzer
+AutoHover=true
+AutoImport=true
+BlockedServerCommandLines=
+CompletionDocumentation=true
+CompletionParens=true
+Diagnostics=true
+FormatOnSave=false
+HighlightGoto=true
+HighlightSymbol=true
+IncrementalSync=false
+InlayHints=false
+Messages=true
+ReferencesDeclaration=true
+SemanticHighlighting=true
+ServerConfiguration=
+ShowCompletions=true
+SignatureHelp=true
+SymbolDetails=false
+SymbolExpand=true
+SymbolSort=false
+SymbolTree=true
+TypeFormatting=false

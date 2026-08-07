@@ -1,0 +1,11 @@
+[FileDialogSize]
+2 screens: Window-Maximized=true
+
+[KFileDialog Settings]
+Recent Files[$e]=file:$HOME/.cache/wal/colors.json.cyberpunk
+Recent URLs[$e]=file:$HOME/.local/bin/,file:$HOME/.cache/wal/,file:$HOME/
+
+[MainWindow]
+2 screens: Height=993
+2 screens: Width=1045
+State=AAAA/wAAAAD9AAAAAAAABBUAAAOUAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAIAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAAAAAAGABoAGEAbQBiAHUAcgBnAGUAcgBCAGEAcgEAAAJZ/////wAAAAAAAAAA

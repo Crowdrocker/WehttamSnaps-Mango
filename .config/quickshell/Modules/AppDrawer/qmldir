@@ -1,0 +1,4 @@
+module qs.Modules.AppDrawer
+AppLauncher 1.0 AppLauncher.qml
+CategorySelector 1.0 CategorySelector.qml
+AppDrawerPopout 1.0 AppDrawerPopout.qml

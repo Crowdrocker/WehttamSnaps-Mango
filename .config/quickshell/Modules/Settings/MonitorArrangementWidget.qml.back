@@ -1,0 +1,496 @@
+import QtQuick
+import QtQuick.Controls
+import qs.Common
+import qs.Widgets
+
+StyledRect {
+    id: root
+
+    property var monitors: []
+    property var monitorCapabilities: ({})
+    property string selectedMonitor: ""
+    signal monitorSelected(string monitorName)
+    signal positionChanged(string monitorName, string newPosition)
+
+    height: arrangementColumn.implicitHeight + Theme.spacingL * 2
+    radius: Theme.cornerRadius
+    color: Qt.rgba(Theme.surfaceVariant.r, Theme.surfaceVariant.g, Theme.surfaceVariant.b, 0.20)
+    border.color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.12)
+    border.width: 1
+
+    function parsePosition(pos) {
+        if (!pos || pos === "") return {x: 0, y: 0}
+        var parts = pos.split("x")
+        if (parts.length >= 2)
+            return {x: parseInt(parts[0]) || 0, y: parseInt(parts[1]) || 0}
+        return {x: 0, y: 0}
+    }
+
+    function calculateAutoPosition(index) {
+        var x = 0
+        for (var i = 0; i < index; i++) {
+            if (i < monitors.length && !monitors[i].disabled) {
+                var caps = monitorCapabilities[monitors[i].name] || {}
+                var w = caps.width || 1920
+                var s = parseFloat(monitors[i].scale || "1.0")
+                x += w / s
+            }
+        }
+        return {x: x, y: 0}
+    }
+
+    function getMonitorBounds() {
+        var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+        var hasAny = false
+        for (var i = 0; i < monitors.length; i++) {
+            var m = monitors[i]
+            if (m.disabled) continue
+            hasAny = true
+            var pos = (m.position && m.position !== "") ? parsePosition(m.position) : calculateAutoPosition(i)
+            var caps = monitorCapabilities[m.name] || {}
+            var sw = (caps.width  || 1920) / parseFloat(m.scale || "1.0")
+            var sh = (caps.height || 1080) / parseFloat(m.scale || "1.0")
+            if (pos.x      < minX) minX = pos.x
+            if (pos.y      < minY) minY = pos.y
+            if (pos.x + sw > maxX) maxX = pos.x + sw
+            if (pos.y + sh > maxY) maxY = pos.y + sh
+        }
+        if (!hasAny) return {minX: 0, minY: 0, maxX: 1920, maxY: 1080, width: 1920, height: 1080}
+        return {minX: minX, minY: minY, maxX: maxX, maxY: maxY, width: maxX - minX, height: maxY - minY}
+    }
+
+    function alignMonitorsToTop() {
+        var topmostY = null
+        for (var i = 0; i < monitors.length; i++) {
+            var m = monitors[i]
+            if (m.disabled) continue
+            var pos = (m.position && m.position !== "") ? parsePosition(m.position) : calculateAutoPosition(i)
+            if (topmostY === null || pos.y < topmostY) topmostY = pos.y
+        }
+        if (topmostY === null) return
+        for (var j = 0; j < monitors.length; j++) {
+            var ma = monitors[j]
+            if (ma.disabled) continue
+            var cp = (ma.position && ma.position !== "") ? parsePosition(ma.position) : calculateAutoPosition(j)
+            if (cp.y !== topmostY)
+                positionChanged(ma.name, cp.x + "x" + topmostY)
+        }
+    }
+
+    Column {
+        id: arrangementColumn
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: Theme.spacingL
+        spacing: Theme.spacingM
+
+        // ── Header ───────────────────────────────────────────────────────────
+        Item {
+            width: parent.width
+            height: Math.max(headerText.implicitHeight, headerButtons.height)
+
+            StyledText {
+                id: headerText
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Monitor Arrangement"
+                font.pixelSize: Theme.fontSizeLarge
+                font.weight: Font.Medium
+                color: Theme.surfaceText
+            }
+
+            Row {
+                id: headerButtons
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.spacingS
+
+                StyledRect {
+                    height: 32
+                    width: centerBtnText.implicitWidth + Theme.spacingM * 2
+                    radius: Theme.cornerRadius
+                    color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.1)
+                    border.color: Theme.primary
+                    border.width: 1
+                    visible: monitors.length > 0
+                    StyledText {
+                        id: centerBtnText
+                        anchors.centerIn: parent
+                        text: "Center View"
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: Theme.primary
+                    }
+                    StateLayer {
+                        stateColor: Theme.primary
+                        cornerRadius: parent.radius
+                        onClicked: canvas.doCenter()
+                    }
+                }
+
+                StyledRect {
+                    height: 32
+                    width: alignBtnText.implicitWidth + Theme.spacingM * 2
+                    radius: Theme.cornerRadius
+                    color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.1)
+                    border.color: Theme.primary
+                    border.width: 1
+                    visible: monitors.length > 0
+                    StyledText {
+                        id: alignBtnText
+                        anchors.centerIn: parent
+                        text: "Align Top"
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: Theme.primary
+                    }
+                    StateLayer {
+                        stateColor: Theme.primary
+                        cornerRadius: parent.radius
+                        onClicked: root.alignMonitorsToTop()
+                    }
+                }
+            }
+        }
+
+        // ── Canvas ───────────────────────────────────────────────────────────
+        Item {
+            width: parent.width
+            // Responsive height: 38% of width, clamped between 200–420 px
+            height: Math.max(200, Math.min(parent.width * 0.38, 420))
+            clip: true
+
+            Rectangle {
+                anchors.fill: parent
+                radius: Theme.cornerRadius
+                color: Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, 0.45)
+                border.color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.10)
+                border.width: 1
+            }
+
+            // Pure-Item canvas — no Flickable, no circular bindings
+            Item {
+                id: canvas
+                anchors.fill: parent
+                anchors.margins: 1
+                clip: true
+
+                // ── State ─────────────────────────────────────────────────
+                property var  bounds:      ({minX:0, minY:0, maxX:1920, maxY:1080, width:1920, height:1080})
+                property real fitScale:    0.12
+                property real zoomLevel:   1.0
+                property real scaleFactor: fitScale * zoomLevel
+                // top-left origin of monitor-space in screen pixels
+                property real panX: 0
+                property real panY: 0
+
+                // ── Coord helpers ──────────────────────────────────────────
+                function toScreenX(ax) { return panX + (ax - bounds.minX) * scaleFactor }
+                function toScreenY(ay) { return panY + (ay - bounds.minY) * scaleFactor }
+
+                // ── Refresh & centre ───────────────────────────────────────
+                function recalc() {
+                    var b = root.getMonitorBounds()
+                    bounds = b
+                    if (b.width > 0 && b.height > 0) {
+                        var ws = (width  * 0.80) / b.width
+                        var hs = (height * 0.80) / b.height
+                        fitScale = Math.min(ws, hs, 0.30)
+                    }
+                }
+
+                function doCenter() {
+                    var cx = bounds.minX + bounds.width  / 2
+                    var cy = bounds.minY + bounds.height / 2
+                    panX = width  / 2 - (cx - bounds.minX) * scaleFactor
+                    panY = height / 2 - (cy - bounds.minY) * scaleFactor
+                }
+
+                function refresh() { recalc(); doCenter() }
+
+                onWidthChanged:  Qt.callLater(refresh)
+                onHeightChanged: Qt.callLater(refresh)
+                Component.onCompleted: Qt.callLater(refresh)
+
+                Connections {
+                    target: root
+                    function onMonitorsChanged()            { canvas.refresh() }
+                    function onMonitorCapabilitiesChanged() { canvas.refresh() }
+                }
+
+                // ── Pan (left-button on background) + zoom ─────────────────
+                MouseArea {
+                    id: bgPan
+                    anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+                    propagateComposedEvents: true
+
+                    property real lastX: 0
+                    property real lastY: 0
+                    property bool panning: false
+
+                    onPressed: mouse => {
+                        // Only pan if no monitor delegate consumed the press
+                        lastX = mouse.x; lastY = mouse.y
+                        panning = true
+                    }
+                    onPositionChanged: mouse => {
+                        if (panning && pressedButtons) {
+                            canvas.panX += mouse.x - lastX
+                            canvas.panY += mouse.y - lastY
+                            lastX = mouse.x; lastY = mouse.y
+                        }
+                    }
+                    onReleased: { panning = false }
+
+                    onWheel: wheel => {
+                        var factor   = wheel.angleDelta.y > 0 ? 1.12 : (1 / 1.12)
+                        var oldScale = canvas.scaleFactor
+                        canvas.zoomLevel = Math.max(0.25, Math.min(6.0, canvas.zoomLevel * factor))
+                        var ratio = canvas.scaleFactor / oldScale
+                        canvas.panX = wheel.x - (wheel.x - canvas.panX) * ratio
+                        canvas.panY = wheel.y - (wheel.y - canvas.panY) * ratio
+                        wheel.accepted = true
+                    }
+                }
+
+                // ── Monitor delegates ──────────────────────────────────────
+                Repeater {
+                    model: root.monitors
+
+                    delegate: Item {
+                        id: del
+                        property var  monitor:   modelData
+                        property var  caps:      root.monitorCapabilities[monitor.name] || {}
+                        property real monitorW:  (caps.width  || 1920) / parseFloat(monitor.scale || "1.0")
+                        property real monitorH:  (caps.height || 1080) / parseFloat(monitor.scale || "1.0")
+                        property bool isSelected: root.selectedMonitor === monitor.name
+                        visible: !monitor.disabled
+                        z: isSelected ? 10 : 1
+
+                        property var actualPos: (monitor.position && monitor.position !== "")
+                            ? root.parsePosition(monitor.position)
+                            : root.calculateAutoPosition(index)
+
+                        // Base screen position from pan/zoom (non-drag)
+                        property real baseX: canvas.toScreenX(actualPos.x)
+                        property real baseY: canvas.toScreenY(actualPos.y)
+
+                        // Live drag offsets (screen pixels)
+                        property real dragDX: 0
+                        property real dragDY: 0
+                        property bool dragging: false
+
+                        x: baseX + dragDX
+                        y: baseY + dragDY
+                        width:  monitorW * canvas.scaleFactor
+                        height: monitorH * canvas.scaleFactor
+
+                        // ── Card ───────────────────────────────────────────
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: Theme.cornerRadius * 1.5
+                            color: isSelected
+                                ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.22)
+                                : Qt.rgba(Theme.surfaceVariant.r, Theme.surfaceVariant.g, Theme.surfaceVariant.b, 0.60)
+                            border.color: isSelected
+                                ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.90)
+                                : Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.28)
+                            border.width: isSelected ? 2 : 1
+                            Behavior on color        { ColorAnimation { duration: 120 } }
+                            Behavior on border.color { ColorAnimation { duration: 120 } }
+
+                            Column {
+                                anchors.centerIn: parent
+                                spacing: 3
+                                width: parent.width * 0.85
+
+                                StyledText {
+                                    width: parent.width
+                                    text: monitor.name
+                                    font.pixelSize: Math.max(12, Math.min(del.width / 5.5, del.height / 2.5))
+                                    font.weight: Font.Bold
+                                    color: isSelected ? Theme.primary : Theme.surfaceText
+                                    horizontalAlignment: Text.AlignHCenter
+                                    elide: Text.ElideRight
+                                    Behavior on color { ColorAnimation { duration: 120 } }
+                                }
+
+                                StyledText {
+                                    width: parent.width
+                                    text: {
+                                        var make  = caps.make  || ""
+                                        var model = caps.model || ""
+                                        if (make && model) return make + " " + model
+                                        if (make)  return make
+                                        if (model) return model
+                                        var desc = caps.description || ""
+                                        return desc ? desc.split(" ").slice(0, 4).join(" ") : ""
+                                    }
+                                    font.pixelSize: Math.max(7, Math.min(del.width / 18, 12))
+                                    color: isSelected
+                                        ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.75)
+                                        : Theme.surfaceVariantText
+                                    horizontalAlignment: Text.AlignHCenter
+                                    elide: Text.ElideRight
+                                    visible: text !== ""
+                                }
+
+                                StyledText {
+                                    width: parent.width
+                                    text: (caps.width && caps.height) ? caps.width + "×" + caps.height : ""
+                                    font.pixelSize: Math.max(6, Math.min(del.width / 22, 10))
+                                    color: Qt.rgba(Theme.surfaceVariantText.r, Theme.surfaceVariantText.g, Theme.surfaceVariantText.b, 0.55)
+                                    horizontalAlignment: Text.AlignHCenter
+                                    visible: text !== ""
+                                }
+                            }
+                        }
+
+                        // ── Helpers ────────────────────────────────────────
+                        function currentActualX() {
+                            return actualPos.x + dragDX / canvas.scaleFactor
+                        }
+                        function currentActualY() {
+                            return actualPos.y + dragDY / canvas.scaleFactor
+                        }
+
+                        function checkCollision(ax, ay) {
+                            for (var i = 0; i < root.monitors.length; i++) {
+                                var om = root.monitors[i]
+                                if (om.name === monitor.name || om.disabled) continue
+                                var oc = root.monitorCapabilities[om.name] || {}
+                                var op = (om.position && om.position !== "") ? root.parsePosition(om.position) : root.calculateAutoPosition(i)
+                                var ow = (oc.width  || 1920) / parseFloat(om.scale || "1.0")
+                                var oh = (oc.height || 1080) / parseFloat(om.scale || "1.0")
+                                var ox = op.x, oy = op.y
+                                var overlapX = Math.min(ax + monitorW, ox + ow) - Math.max(ax, ox)
+                                var overlapY = Math.min(ay + monitorH, oy + oh) - Math.max(ay, oy)
+                                if (overlapX > Math.min(monitorW, ow) * 0.05 &&
+                                    overlapY > Math.min(monitorH, oh) * 0.05) return true
+                            }
+                            return false
+                        }
+
+                        function snapActualX(ax) {
+                            var thresh = 20 / canvas.scaleFactor
+                            var best = ax, bestD = thresh + 1
+                            for (var i = 0; i < root.monitors.length; i++) {
+                                var om = root.monitors[i]
+                                if (om.name === monitor.name || om.disabled) continue
+                                var oc = root.monitorCapabilities[om.name] || {}
+                                var op = (om.position && om.position !== "") ? root.parsePosition(om.position) : root.calculateAutoPosition(i)
+                                var ow = (oc.width || 1920) / parseFloat(om.scale || "1.0")
+                                var candidates = [op.x, op.x + ow, op.x - monitorW, op.x + ow - monitorW]
+                                for (var e = 0; e < candidates.length; e++) {
+                                    var d = Math.abs(ax - candidates[e])
+                                    if (d < bestD) { best = candidates[e]; bestD = d }
+                                }
+                            }
+                            return bestD < thresh ? best : ax
+                        }
+
+                        function snapActualY(ay) {
+                            var thresh = 20 / canvas.scaleFactor
+                            var best = ay, bestD = thresh + 1
+                            for (var i = 0; i < root.monitors.length; i++) {
+                                var om = root.monitors[i]
+                                if (om.name === monitor.name || om.disabled) continue
+                                var oc = root.monitorCapabilities[om.name] || {}
+                                var op = (om.position && om.position !== "") ? root.parsePosition(om.position) : root.calculateAutoPosition(i)
+                                var oh = (oc.height || 1080) / parseFloat(om.scale || "1.0")
+                                var candidates = [op.y, op.y + oh, op.y - monitorH, op.y + oh - monitorH]
+                                for (var e = 0; e < candidates.length; e++) {
+                                    var d = Math.abs(ay - candidates[e])
+                                    if (d < bestD) { best = candidates[e]; bestD = d }
+                                }
+                            }
+                            return bestD < thresh ? best : ay
+                        }
+
+                        // ── Drag mouse area ────────────────────────────────
+                        MouseArea {
+                            anchors.fill: parent
+                            preventStealing: true
+                            cursorShape: del.dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+
+                            property real pressX: 0
+                            property real pressY: 0
+
+                            onPressed: mouse => {
+                                // Stop background pan from firing
+                                mouse.accepted = true
+                                bgPan.panning = false
+                                root.selectedMonitor = monitor.name
+                                root.monitorSelected(monitor.name)
+                                pressX = mouse.x
+                                pressY = mouse.y
+                                del.dragDX = 0
+                                del.dragDY = 0
+                            }
+
+                            onPositionChanged: mouse => {
+                                if (pressedButtons & Qt.LeftButton) {
+                                    del.dragging = true
+                                    var dx = mouse.x - pressX
+                                    var dy = mouse.y - pressY
+
+                                    // Attempt collision avoidance
+                                    var ax = del.actualPos.x + dx / canvas.scaleFactor
+                                    var ay = del.actualPos.y + dy / canvas.scaleFactor
+                                    if (checkCollision(ax, ay)) {
+                                        var offsets = [0, 8, 16, -8, -16]
+                                        var found = false
+                                        for (var i = 0; i < offsets.length && !found; i++)
+                                            for (var j = 0; j < offsets.length && !found; j++) {
+                                                var tx = ax + offsets[i] / canvas.scaleFactor
+                                                var ty = ay + offsets[j] / canvas.scaleFactor
+                                                if (!checkCollision(tx, ty)) {
+                                                    dx = (tx - del.actualPos.x) * canvas.scaleFactor
+                                                    dy = (ty - del.actualPos.y) * canvas.scaleFactor
+                                                    found = true
+                                                }
+                                            }
+                                    }
+                                    del.dragDX = dx
+                                    del.dragDY = dy
+                                }
+                            }
+
+                            onReleased: {
+                                if (!del.dragging) return
+                                del.dragging = false
+
+                                var ax = snapActualX(del.actualPos.x + del.dragDX / canvas.scaleFactor)
+                                var ay = snapActualY(del.actualPos.y + del.dragDY / canvas.scaleFactor)
+
+                                // Gap elimination
+                                var alignT = 20 / canvas.scaleFactor
+                                for (var i = 0; i < root.monitors.length; i++) {
+                                    var om = root.monitors[i]
+                                    if (om.name === monitor.name || om.disabled) continue
+                                    var oc = root.monitorCapabilities[om.name] || {}
+                                    var op = (om.position && om.position !== "") ? root.parsePosition(om.position) : root.calculateAutoPosition(i)
+                                    var ow = (oc.width  || 1920) / parseFloat(om.scale || "1.0")
+                                    var oh = (oc.height || 1080) / parseFloat(om.scale || "1.0")
+                                    if (Math.abs(ax - (op.x + ow))         < alignT) { ax = op.x + ow;         break }
+                                    if (Math.abs((ax + monitorW) - op.x)   < alignT) { ax = op.x - monitorW;   break }
+                                    if (Math.abs(ay - (op.y + oh))         < alignT) { ay = op.y + oh;         break }
+                                    if (Math.abs((ay + monitorH) - op.y)   < alignT) { ay = op.y - monitorH;   break }
+                                }
+
+                                del.dragDX = 0
+                                del.dragDY = 0
+
+                                ax = Math.round(ax)
+                                ay = Math.round(ay)
+                                var newPos = ax + "x" + ay
+                                if (newPos !== monitor.position)
+                                    root.positionChanged(monitor.name, newPos)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

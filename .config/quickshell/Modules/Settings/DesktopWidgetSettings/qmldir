@@ -1,0 +1,9 @@
+module qs.Modules.Settings.DesktopWidgetSettings
+ClockSettings 1.0 ClockSettings.qml
+CavaSettings 1.0 CavaSettings.qml
+FastfetchSettings 1.0 FastfetchSettings.qml
+MacOSClockSettings 1.0 MacOSClockSettings.qml
+MediaPlayerSettings 1.0 MediaPlayerSettings.qml
+SystemMonitorSettings 1.0 SystemMonitorSettings.qml
+PluginDesktopWidgetSettings 1.0 PluginDesktopWidgetSettings.qml
+WallpaperGallerySettings 1.0 WallpaperGallerySettings.qml

@@ -1,0 +1,286 @@
+[Document 0]
+URL=file:///mnt/GAMEDRIVE/MY-NOTES/store passwords, notes
+
+[Document 1]
+URL=file:///mnt/GAMEDRIVE/MY-NOTES/STEAMLAUNCH
+
+[Document 10]
+URL=file:///mnt/GAMEDRIVE/MY-NOTES/store passwords, notes
+
+[Document 11]
+URL=
+stashedFile=/home/wehttamsnaps/.local/share/kate/stash/gaming.katesession/Document 11
+
+[Document 12]
+URL=file:///mnt/GAMEDRIVE/MY-NOTES/store passwords, notes
+
+[Document 13]
+URL=file:///mnt/GAMEDRIVE/MY-NOTES/store passwords, notes
+
+[Document 14]
+URL=file:///home/wehttamsnaps/aurlist.txt
+
+[Document 15]
+URL=file:///home/wehttamsnaps/pkglist.txt
+
+[Document 16]
+URL=file:///etc/fstab
+
+[Document 2]
+URL=file:///mnt/GAMEDRIVE/MY-NOTES/Steam Lauch Options
+
+[Document 3]
+URL=file:///home/wehttamsnaps/.config/hypr/hyprland/keybinds.lua
+
+[Document 4]
+URL=file:///home/wehttamsnaps/.config/hypr/hyprland/binds.lua
+
+[Document 5]
+URL=file:///home/wehttamsnaps/.config/mango/hyprmango/env.conf
+
+[Document 6]
+URL=file:///home/wehttamsnaps/.config/hypr/hyprland/rules.lua
+
+[Document 7]
+URL=file:///home/wehttamsnaps/.config/hypr/hyprland/variables.lua
+
+[Document 8]
+URL=file:///home/wehttamsnaps/.config/hypr/monitors.lua
+
+[Document 9]
+URL=file:///home/wehttamsnaps/.config/niri/conf.d/90-user-extra.kdl
+
+[Kate Plugins]
+bookmarksplugin=false
+cmaketoolsplugin=false
+compilerexplorer=false
+eslintplugin=false
+externaltoolsplugin=true
+formatplugin=false
+katebacktracebrowserplugin=false
+katebuildplugin=false
+katecloseexceptplugin=false
+katecolorpickerplugin=false
+katectagsplugin=false
+katefilebrowserplugin=false
+katefiletreeplugin=true
+kategdbplugin=false
+kategitblameplugin=false
+kategpgplugin=false
+katekonsoleplugin=true
+kateprojectplugin=true
+katereplicodeplugin=false
+katesearchplugin=true
+katesnippetsplugin=false
+katesqlplugin=false
+katesymbolviewerplugin=false
+katexmlcheckplugin=false
+katexmltoolsplugin=false
+keyboardmacrosplugin=false
+ktexteditorpreviewplugin=false
+latexcompletionplugin=false
+lspclientplugin=true
+openlinkplugin=false
+rainbowparens=false
+rbqlplugin=false
+tabswitcherplugin=true
+templateplugin=false
+textfilterplugin=true
+
+[MainWindow0]
+Active ViewSpace=0
+Kate-MDI-H-Splitter=189,1257,0
+Kate-MDI-Sidebar-0-Bar-0-TvList=kate_private_plugin_katefiletreeplugin,kateproject,kateprojectgit,lspclient_symbol_outline
+Kate-MDI-Sidebar-0-LastSize=189
+Kate-MDI-Sidebar-0-SectSizes=0
+Kate-MDI-Sidebar-0-Splitter=862
+Kate-MDI-Sidebar-1-Bar-0-TvList=
+Kate-MDI-Sidebar-1-LastSize=200
+Kate-MDI-Sidebar-1-SectSizes=0
+Kate-MDI-Sidebar-1-Splitter=862
+Kate-MDI-Sidebar-2-Bar-0-TvList=
+Kate-MDI-Sidebar-2-LastSize=200
+Kate-MDI-Sidebar-2-SectSizes=0
+Kate-MDI-Sidebar-2-Splitter=1257
+Kate-MDI-Sidebar-3-Bar-0-TvList=output,diagnostics,kate_plugin_katesearch,kateprojectinfo,kate_private_plugin_katekonsoleplugin
+Kate-MDI-Sidebar-3-LastSize=227
+Kate-MDI-Sidebar-3-SectSizes=0
+Kate-MDI-Sidebar-3-Splitter=1094
+Kate-MDI-Sidebar-Style=2
+Kate-MDI-Sidebar-Visible=true
+Kate-MDI-ToolView-diagnostics-Position=3
+Kate-MDI-ToolView-diagnostics-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-diagnostics-Visible=false
+Kate-MDI-ToolView-kate_plugin_katesearch-Position=3
+Kate-MDI-ToolView-kate_plugin_katesearch-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-kate_plugin_katesearch-Visible=false
+Kate-MDI-ToolView-kate_private_plugin_katefiletreeplugin-Position=0
+Kate-MDI-ToolView-kate_private_plugin_katefiletreeplugin-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-kate_private_plugin_katefiletreeplugin-Visible=true
+Kate-MDI-ToolView-kate_private_plugin_katekonsoleplugin-Position=3
+Kate-MDI-ToolView-kate_private_plugin_katekonsoleplugin-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-kate_private_plugin_katekonsoleplugin-Visible=false
+Kate-MDI-ToolView-kateproject-Position=0
+Kate-MDI-ToolView-kateproject-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-kateproject-Visible=false
+Kate-MDI-ToolView-kateprojectgit-Position=0
+Kate-MDI-ToolView-kateprojectgit-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-kateprojectgit-Visible=false
+Kate-MDI-ToolView-kateprojectinfo-Position=3
+Kate-MDI-ToolView-kateprojectinfo-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-kateprojectinfo-Visible=false
+Kate-MDI-ToolView-lspclient_symbol_outline-Position=0
+Kate-MDI-ToolView-lspclient_symbol_outline-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-lspclient_symbol_outline-Visible=false
+Kate-MDI-ToolView-output-Position=3
+Kate-MDI-ToolView-output-Show-Button-In-Sidebar=true
+Kate-MDI-ToolView-output-Visible=false
+Kate-MDI-V-Splitter=0,862,0
+
+[MainWindow0 Settings]
+WindowState=8
+
+[MainWindow0-Splitter 0]
+Children=MainWindow0-ViewSpace 0
+Orientation=1
+Sizes=1257
+
+[MainWindow0-ViewSpace 0]
+Active View=3
+Count=3
+Documents=0,1,2,3
+View 0=1
+View 1=2
+View 2=3
+View 3=4
+View 4=4
+View 5=5
+View 6=6
+
+[MainWindow0-ViewSpace 0 0]
+CursorColumn=0
+CursorLine=23
+ScrollLine=11
+
+[MainWindow0-ViewSpace 0 1]
+CursorColumn=1
+CursorLine=58
+ScrollLine=46
+
+[MainWindow0-ViewSpace 0 10]
+CursorColumn=14
+CursorLine=42
+ScrollLine=11
+
+[MainWindow0-ViewSpace 0 11]
+CursorColumn=84
+CursorLine=0
+
+[MainWindow0-ViewSpace 0 12]
+CursorColumn=14
+CursorLine=42
+ScrollLine=11
+
+[MainWindow0-ViewSpace 0 13]
+CursorColumn=14
+CursorLine=42
+ScrollLine=26
+
+[MainWindow0-ViewSpace 0 15]
+CursorColumn=0
+CursorLine=416
+
+[MainWindow0-ViewSpace 0 5]
+CursorColumn=19
+CursorLine=15
+
+[MainWindow0-ViewSpace 0 6]
+CursorColumn=0
+CursorLine=162
+ScrollLine=137
+
+[MainWindow0-ViewSpace 0 file:///home/wehttamsnaps/.config/hypr/hyprland/rules.lua]
+CursorColumn=0
+CursorLine=162
+ScrollLine=137
+
+[MainWindow0-ViewSpace 0 file:///home/wehttamsnaps/.config/hypr/hyprland/variables.lua]
+CursorColumn=26
+CursorLine=3
+
+[MainWindow0-ViewSpace 0 file:///home/wehttamsnaps/.config/hypr/monitors.lua]
+CursorColumn=2
+CursorLine=12
+
+[MainWindow0-ViewSpace 0 file:///home/wehttamsnaps/.config/mango/hyprmango/env.conf]
+CursorColumn=19
+CursorLine=15
+
+[MainWindow0-ViewSpace 0 file:///home/wehttamsnaps/.config/mango/hyprmango/rules.conf]
+CursorColumn=32
+CursorLine=99
+ScrollLine=86
+
+[MainWindow0-ViewSpace 0 file:///mnt/GAMEDRIVE/MY-NOTES/ARCHITECT SCRIPT Adding Useful Aliases]
+CursorColumn=0
+CursorLine=121
+
+[MainWindow0-ViewSpace 0 file:///mnt/GAMEDRIVE/MY-NOTES/The Ultimate Guide to Arch Linux Gaming for Beginners]
+CursorColumn=62
+CursorLine=139
+ScrollLine=128
+
+[Open Documents]
+Count=4
+
+[Open MainWindows]
+Count=1
+
+[Plugin:kateprojectplugin:]
+projects=
+
+[Plugin:katesearchplugin:MainWindow:0]
+BinaryFiles=false
+CurrentExcludeFilter=0
+CurrentFilter=0
+ExcludeFilters=\\0
+ExpandSearchResults=false
+Filters=\\0
+FollowSymLink=false
+HiddenFiles=false
+MatchCase=false
+Place=1
+Recursive=true
+Replaces=\s- ,My,-,+,/,paru --needed --noconfirm -S\s
+Search=steam,noctalia,skip-at-startup,prefer-no-csd,geometry-corner-radius 20,default-window-heigh,UbisoftConnect,xwayland,DISPLAY,$DISPLAY,_JAVA_AWT_WM_NONREPARENTING,fDefaultAutoVanityZoom,fVertibirdVanityModeMaxDist,fSafeZoneY,fDefaultWorldFOV,fDialogueCameraMouseMoveExit,fLThumbDeadzone,f3rdPersonCameraBoneHeightMult,fGamepadHeadingSensitivityDefault,fDefault1stPersonFOV,bApplyCameraNodeAnimations,fMouseWheelZoomSpeed,f3rdPersonAimFOV,bPipboyDisableFX
+SearchAsYouTypeAllProjects=true
+SearchAsYouTypeCurrentFile=true
+SearchAsYouTypeFolder=true
+SearchAsYouTypeOpenFiles=true
+SearchAsYouTypeProject=true
+SearchDiskFiles=
+SearchDiskFiless=\\0
+SizeLimit=128
+UseRegExp=false
+
+[Recent Files]
+File1[$e]=$HOME/.config/hypr/hyprland/layout.lua
+File10[$e]=$HOME/.config/hypr/hyprland/animations.lua
+File2[$e]=$HOME/.config/hypr/hyprland/keybinds.lua
+File3[$e]=$HOME/.config/hypr/hyprland/input.lua
+File4[$e]=$HOME/.config/hypr/hyprland/general.lua
+File5[$e]=$HOME/.config/hypr/hyprland/execs.lua
+File6[$e]=$HOME/.config/hypr/hyprland/env.lua
+File7[$e]=$HOME/.config/hypr/hyprland/decoration.lua
+File8[$e]=$HOME/.config/hypr/hyprland/colors.lua
+File9[$e]=$HOME/.config/hypr/hyprland/binds.lua
+Name1[$e]=layout.lua
+Name10[$e]=animations.lua
+Name2[$e]=keybinds.lua
+Name3[$e]=input.lua
+Name4[$e]=general.lua
+Name5[$e]=execs.lua
+Name6[$e]=env.lua
+Name7[$e]=decoration.lua
+Name8[$e]=colors.lua
+Name9[$e]=binds.lua

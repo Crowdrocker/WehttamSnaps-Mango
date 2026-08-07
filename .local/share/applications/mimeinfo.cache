@@ -1,0 +1,9 @@
+[MIME Cache]
+application/vnd.debian.binary-package=event-horizon-pkg-manager.desktop;
+application/x-archive=event-horizon-pkg-manager.desktop;
+application/x-deb=event-horizon-pkg-manager.desktop;
+application/x-redhat-package-manager=event-horizon-pkg-manager.desktop;
+application/x-rpm=event-horizon-pkg-manager.desktop;
+application/x-tar=event-horizon-pkg-manager.desktop;
+application/x-zstd-compressed-tar=event-horizon-pkg-manager.desktop;
+application/zstd=event-horizon-pkg-manager.desktop;

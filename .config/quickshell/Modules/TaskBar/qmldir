@@ -1,0 +1,6 @@
+module qs.Modules.TaskBar
+TaskBar 1.0 TaskBar.qml
+TaskBarAppButton 1.0 TaskBarAppButton.qml
+TaskBarApps 1.0 TaskBarApps.qml
+TaskBarContextMenu 1.0 TaskBarContextMenu.qml
+TrashContextMenu 1.0 TrashContextMenu.qml

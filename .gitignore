@@ -8,3 +8,7 @@
 # scripts here that need API keys, etc.
 *.env
 secrets.conf
+/.local/share/mybash
+/.local/state/noctalia/plugins/sources/community/repo
+/.local/state/noctalia/plugins/sources/official/repo
+/.config/zsh/ohmyzsh
